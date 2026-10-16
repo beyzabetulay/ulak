@@ -1,0 +1,12 @@
+# python
+venv/
+__pycache__/
+*.pyc
+
+# raw dataset (HCRL'den ayrica indirilmeli) ve uretilen pipeline ciktilari
+car_track_*/
+combined_dataset.csv
+features_*.parquet
+
+# os
+.DS_Store
