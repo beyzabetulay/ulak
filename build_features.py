@@ -2,7 +2,7 @@
 combined_dataset.csv -> numeric features, split into train/test parquet files.
 
 Input: combined_dataset.csv (output of prepare_data.py)
-Output:
+Output (row order matches combined_dataset.csv):
   - features_all.parquet   : full dataset with numeric features
   - features_train.parquet : split == "train" (HCRL *_train folders)
   - features_test.parquet  : split == "test"  (HCRL *_release folders, attack_type unknown)
@@ -20,6 +20,8 @@ assert df["can_id"].str.match(r"^[0-9A-Fa-f]+$").all(), "can_id contains non-hex
 
 # --- can_id: hex string -> decimal int ---
 df["can_id_dec"] = df["can_id"].apply(lambda x: int(x, 16))
+# raw files mix 3- and 4-digit IDs ("080" vs "0080"); normalize so string counts match can_id_dec
+df["can_id"] = df["can_id_dec"].apply(lambda x: f"{x:04X}")
 
 # --- dlc: string -> int ---
 df["dlc"] = df["dlc"].astype(int)
@@ -35,8 +37,41 @@ df["timestamp"] = df["timestamp"].astype(float)
 # --- label: R/T -> 0/1 (model target variable) ---
 df["label_bin"] = (df["label"] == "T").astype(int)
 
+# --- recording_id: one value per raw CSV ---
+# File names repeat across folders (File_1.csv in three release folders,
+# Attack_free_KIA_Soul_train.csv in two train folders), so source_file alone
+# merges separate recordings. Group by recording_id instead.
+df["recording_id"] = df["source_folder"] + "/" + df["source_file"]
+
+# --- timing features ---
+# Computed per recording in timestamp order, using only past frames (causal).
+# Row order of the output stays unchanged: splits/ stores row positions into these files.
+BUS_WINDOW_S = 0.1
+ts_sorted = df[["recording_id", "can_id_dec", "timestamp"]].sort_values(
+    ["recording_id", "timestamp"], kind="stable")
+
+# time since the previous frame on the bus (any ID); NaN for a recording's first frame
+iat_bus = ts_sorted.groupby("recording_id")["timestamp"].diff()
+# time since the previous frame with the same ID; NaN for an ID's first frame in a recording
+iat_id = ts_sorted.groupby(["recording_id", "can_id_dec"])["timestamp"].diff()
+
+
+def frames_in_window(ts):
+    # frames in (t - BUS_WINDOW_S, t], including the current one
+    t = ts.to_numpy()
+    return pd.Series(np.arange(len(t)) - np.searchsorted(t, t - BUS_WINDOW_S, side="right") + 1,
+                     index=ts.index)
+
+
+bus_count = ts_sorted.groupby("recording_id", group_keys=False)["timestamp"].apply(frames_in_window)
+
+df["iat_bus"] = iat_bus
+df["iat_id"] = iat_id
+df["bus_count_100ms"] = bus_count
+
 cols = ["timestamp", "can_id", "can_id_dec", "dlc"] + [f"byte_{i}" for i in range(8)] + \
-       ["label", "label_bin", "vehicle", "attack_type", "source_file", "source_folder", "split"]
+       ["iat_bus", "iat_id", "bus_count_100ms"] + \
+       ["label", "label_bin", "vehicle", "attack_type", "source_file", "source_folder", "recording_id", "split"]
 df = df[cols]
 
 df.to_parquet(os.path.join(base, "features_all.parquet"), index=False)
