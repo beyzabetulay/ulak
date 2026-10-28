@@ -1,4 +1,4 @@
-# De-CAN
+# ULAK
 
 Intrusion detection for in-vehicle CAN bus networks, with a focus on whether
 ML models learn genuine attack behavior or latch onto superficial shortcuts
@@ -6,7 +6,7 @@ ML models learn genuine attack behavior or latch onto superficial shortcuts
 
 ## Overview
 
-De-CAN builds a data pipeline and detection models for CAN bus attacks
+ULAK builds a data pipeline and detection models for CAN bus attacks
 (spoofing, replay, fuzzing/injection, DoS) using the HCRL "In-Vehicle Network
 Intrusion Detection Challenge" (2019) dataset, recorded across three vehicles
 (Hyundai Sonata, Kia Soul, Chevrolet Spark). Alongside standard detection
