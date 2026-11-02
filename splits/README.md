@@ -37,3 +37,22 @@ X_test, y_test = df.iloc[test][features], df.iloc[test][m['target']]
 Fit missing-value preprocessing on training data only. Report precision, recall and F1 for both classes. Attack-type analysis is valid only on this training partition; attack types identify traces containing both normal and attack frames.
 
 The baseline runs a depth-6 decision tree with five source-file GroupKFold folds on all training rows, compares ID-only, full-feature, and ID-masked configurations, and writes `experiments/results/shortcut_baseline.md`. Its feature importances are averaged over the five fitted trees. Use `--help` for configuration options. Results are pooled out-of-fold metrics, not scores on the same rows used to fit a tree.
+
+## Kia Soul (single vehicle)
+
+```sh
+python prepare_kia_soul.py
+python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features
+python splits/make_kia_splits.py
+```
+
+The generator uses `kia_soul_features_all.parquet` and writes to `splits/generated/kia_soul/`, in the same format as above (index arrays and `manifest.json`, loaded the same way). Each fold's manifest entry lists its train and test recordings. Train and test never share a `recording_id`.
+
+| Fold | Train | Test |
+|---|---|---|
+| `unseen_dos`, `unseen_injection`, `unseen_spoofing`, `unseen_replay` | training partition without the held-out attack's recordings (attack-free recordings always included) | all recordings of the held-out attack |
+| `official` | training partition (HCRL `*_train` folders) | HCRL `*_release` files (attack type withheld) |
+
+Feature variants: `standard` (`can_id_dec`, `dlc`, `byte_0..7`), `id_masked` (no ID), `id_masked_timing` (no ID, plus `iat_id`, `iat_bus`) and `full` (everything, including `bus_count_100ms`). `bus_count_100ms` is only in `full` because it is also high for normal frames inside attack recordings, so it partly describes the recording rather than the frame (see `FINDINGS.md`).
+
+Share of test attack frames whose CAN ID never occurs in the fold's training rows: 15% for `unseen_injection`, 0% for every other fold. Kia Soul fuzzing mostly reuses the vehicle's own IDs, and ID `0000` (all DoS frames) occurs 14 times in the training rows of `unseen_dos`, inside Injection recordings.
