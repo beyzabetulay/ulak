@@ -60,7 +60,9 @@ all four attack types (DoS, Injection, Spoofing, Replay); Chevrolet Spark has
 no Replay data. `prepare_kia_soul.py` collects every Kia Soul frame from the
 six HCRL folders. Release files carry no vehicle name, so they are assigned by
 CAN ID fingerprint (see the script docstring). Counts are in
-[reports/kia_soul_summary.md](reports/kia_soul_summary.md).
+[reports/kia_soul_summary.md](reports/kia_soul_summary.md). Features are built
+with the same `build_features.py` as the full dataset (`--input` / `--prefix`),
+so the columns match `features_*.parquet`, plus a `round` column.
 
 ## Related Work
 
@@ -91,6 +93,8 @@ python -m venv venv && source venv/bin/activate
 pip install pandas pyarrow
 
 python prepare_kia_soul.py  # -> kia_soul_dataset.csv, reports/kia_soul_summary.md
+python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features
+                          # -> kia_soul_features_all/_train/_test.parquet
 python prepare_data.py    # -> combined_dataset.csv
 python build_features.py  # -> features_all.parquet, features_train.parquet, features_test.parquet
 ```
