@@ -25,6 +25,8 @@ tested on unseen vehicles/attack types.
 ```
 .
 ├── prepare_data.py      # merges raw HCRL CSVs into combined_dataset.csv
+├── prepare_kia_soul.py  # single-vehicle subset -> kia_soul_dataset.csv
+├── reports/             # generated dataset summaries
 ├── build_features.py    # hex -> numeric features, train/test split -> parquet
 ├── backend/              # FastAPI service
 │   ├── app/main.py
@@ -50,6 +52,31 @@ before running the pipeline.
   > method for vehicular networks based on survival analysis." *Vehicular
   > Communications* 14 (2018): 52-63.
 
+### Single-vehicle subset (Kia Soul)
+
+Experiments start on one vehicle before extending to all three. Kia Soul is
+used because it appears in both the preliminary and final rounds and covers
+all four attack types (DoS, Injection, Spoofing, Replay); Chevrolet Spark has
+no Replay data. `prepare_kia_soul.py` collects every Kia Soul frame from the
+six HCRL folders. Release files carry no vehicle name, so they are assigned by
+CAN ID fingerprint (see the script docstring). Counts are in
+[reports/kia_soul_summary.md](reports/kia_soul_summary.md).
+
+## Related Work
+
+- [2024tm05004-beep/HCRL](https://github.com/2024tm05004-beep/HCRL) uses the
+  same HCRL dataset with a dual-layer detector (XGBoost with payload entropy on
+  the CAN layer, Autoencoder / 3-sigma on the telemetry layer) and MITRE ATT&CK
+  for Automotive style alerts, reporting 99.38% accuracy and 0% false
+  positives. It does not analyse shortcut learning, which is this project's
+  focus. Referenced for comparison only; no code from it is included here.
+
+## Future Work
+
+- Secondary datasets for cross-dataset generalization:
+  CAN-MIRGU (only the sample part has been inspected so far) and the ROAD
+  dataset.
+
 ## Getting Started
 
 ### Prerequisites
@@ -63,6 +90,7 @@ before running the pipeline.
 python -m venv venv && source venv/bin/activate
 pip install pandas pyarrow
 
+python prepare_kia_soul.py  # -> kia_soul_dataset.csv, reports/kia_soul_summary.md
 python prepare_data.py    # -> combined_dataset.csv
 python build_features.py  # -> features_all.parquet, features_train.parquet, features_test.parquet
 ```
