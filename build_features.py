@@ -6,15 +6,25 @@ Output (row order matches combined_dataset.csv):
   - features_all.parquet   : full dataset with numeric features
   - features_train.parquet : split == "train" (HCRL *_train folders)
   - features_test.parquet  : split == "test"  (HCRL *_release folders, attack_type unknown)
+
+Kia Soul subset (output of prepare_kia_soul.py):
+  python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features
+  -> kia_soul_features_all.parquet, kia_soul_features_train.parquet, kia_soul_features_test.parquet
 """
+import argparse
 import pandas as pd
 import numpy as np
 import os
 
 base = os.path.dirname(os.path.abspath(__file__))
-df = pd.read_csv(os.path.join(base, "combined_dataset.csv"), dtype=str)
+parser = argparse.ArgumentParser(description="CAN frames CSV -> numeric feature parquet files")
+parser.add_argument("--input", default="combined_dataset.csv", help="CSV from prepare_data.py or prepare_kia_soul.py")
+parser.add_argument("--prefix", default="features", help="output files are <prefix>_all/_train/_test.parquet")
+args = parser.parse_args()
 
-# --- sanity checks (verify prepare_data.py's output is in the expected format) ---
+df = pd.read_csv(os.path.join(base, args.input), dtype=str)
+
+# --- sanity checks (verify the input is in the expected format) ---
 assert df["label"].isin(["R", "T"]).all(), "label column contains values other than R/T"
 assert df["can_id"].str.match(r"^[0-9A-Fa-f]+$").all(), "can_id contains non-hex values"
 
@@ -72,14 +82,17 @@ df["bus_count_100ms"] = bus_count
 cols = ["timestamp", "can_id", "can_id_dec", "dlc"] + [f"byte_{i}" for i in range(8)] + \
        ["iat_bus", "iat_id", "bus_count_100ms"] + \
        ["label", "label_bin", "vehicle", "attack_type", "source_file", "source_folder", "recording_id", "split"]
+# prepare_kia_soul.py also records the HCRL round (preliminary / final_1st / final_2nd)
+if "round" in df.columns:
+    cols.append("round")
 df = df[cols]
 
-df.to_parquet(os.path.join(base, "features_all.parquet"), index=False)
+df.to_parquet(os.path.join(base, f"{args.prefix}_all.parquet"), index=False)
 
 train = df[df["split"] == "train"]
 test = df[df["split"] == "test"]
-train.to_parquet(os.path.join(base, "features_train.parquet"), index=False)
-test.to_parquet(os.path.join(base, "features_test.parquet"), index=False)
+train.to_parquet(os.path.join(base, f"{args.prefix}_train.parquet"), index=False)
+test.to_parquet(os.path.join(base, f"{args.prefix}_test.parquet"), index=False)
 
 print("all  :", df.shape)
 print("train:", train.shape, "-> label_bin distribution:\n", train["label_bin"].value_counts())
