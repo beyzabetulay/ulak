@@ -6,6 +6,7 @@ __pycache__/
 # raw dataset (HCRL'den ayrica indirilmeli) ve uretilen pipeline ciktilari
 car_track_*/
 combined_dataset.csv
+kia_soul_dataset.csv
 features_*.parquet
 
 # os

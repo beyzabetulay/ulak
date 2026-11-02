@@ -32,6 +32,19 @@ Read this before building models or attack scenarios on top of this data.
   challenge organizers — so `attack_type = "mixed/unknown"` for the entire test
   split. `label`/`label_bin` is still correct and usable there.
 
+## Release files: vehicle and ID format
+
+- Release files are named `File_N.csv` without a vehicle. The normal-frame CAN
+  IDs of each one match exactly one vehicle's attack-free ID set (Jaccard 1.0
+  vs. at most 0.44 for the others; preliminary `File_2` is the exception at
+  0.48 with Spark). Kia Soul: preliminary `File_7/8/9`, final_1st `File_2/4`,
+  final_2nd `File_2/4`. `prepare_kia_soul.py` uses this to build the
+  single-vehicle subset.
+- `Attack_free_*` files write IDs as 3 hex digits (`316`), all other files as
+  4 (`0316`). Unnormalized, the string format alone tells attack-free
+  recordings apart from attack recordings, which is a file-identity shortcut.
+  Always normalize before using `can_id` as a string.
+
 ## Critical: do not feed `vehicle` / `attack_type` to a model
 
 Both are reconstructed from filenames, not from the CAN signal itself. Using
