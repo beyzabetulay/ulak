@@ -81,6 +81,10 @@ mixed 3-/4-digit ID formatting, which is now normalized. Fuzzing injects random/
 "unseen ID" is a strong but superficial signal — a model relying on it would
 likely fail against a fuzzer that stays within the legitimate ID range.
 
+For Kia Soul alone, 85% of Injection attack frames reuse one of the vehicle's
+45 legitimate IDs; only 15% carry an ID the vehicle never sends. The
+"unseen ID" shortcut therefore covers only a small part of Kia Soul fuzzing.
+
 ### 3. Timing separates attacks that payload/ID features miss
 
 Medians on the train split (seconds / frame counts):

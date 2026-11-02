@@ -95,6 +95,7 @@ pip install pandas pyarrow
 python prepare_kia_soul.py  # -> kia_soul_dataset.csv, reports/kia_soul_summary.md
 python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features
                           # -> kia_soul_features_all/_train/_test.parquet
+python splits/make_kia_splits.py  # -> splits/generated/kia_soul/ (see splits/README.md)
 python prepare_data.py    # -> combined_dataset.csv
 python build_features.py  # -> features_all.parquet, features_train.parquet, features_test.parquet
 ```
