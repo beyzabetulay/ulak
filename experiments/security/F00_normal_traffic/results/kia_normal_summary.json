@@ -1,0 +1,61 @@
+{
+  "provenance": {
+    "raw_sha256": {
+      "car_track_preliminary_train/Attack_free_KIA_Soul_train.csv": "9642020443091ac6bcb21342e31db32aba484867a2e1e7349198edb25a539927",
+      "car_track_final_1st_train/Attack_free_KIA_Soul_train.csv": "7700dcd23b56b662f86d41f0b2cd53fde21638ea3533c83552520652f0c2d8cb"
+    },
+    "data_script_sha256": {
+      "prepare_data.py": "30b5efa34302134e50914746e0355b2a71e979d0f86114d7d308a44a3cdb7757",
+      "build_features.py": "a3c6ad614bca01bb9c222602a15e81671b9e499899520384d6d00f71c38e29bb"
+    },
+    "config_sha256": "1417a23d71ca7a74dd4d45e7278644e823524ad8cbd02f5eb05e0b59776c5d2f",
+    "git_revision": "e57b1da22bb6b82c0a4e8a1098d8f77af0d6a493",
+    "source_sha256": {
+      "normal_profile.py": "ba683bc2c2c96ad5ef3ed218cb4eaa0d79533be3a28c8f5e3af0466ff06894a1",
+      "normal_plots.py": "6fa4dca576636c8336bf5c582a5d299eec43e0177cf2c8bb43033324462c7f64",
+      "data.py": "a286d25dc619ee604648767ac321b5a92bb358ca052f9edfcc75a3fcaabc59e9"
+    },
+    "dependencies": {
+      "numpy": "2.5.4",
+      "pandas": "3.1.0",
+      "pyarrow": "26.0.0",
+      "matplotlib": "3.11.2"
+    },
+    "python": "3.14.8"
+  },
+  "recordings": [
+    {
+      "recording_id": "car_track_final_1st_train/Attack_free_KIA_Soul_train.csv",
+      "frames": 473212,
+      "unique_ids": 45,
+      "first_timestamp": 1513923742.172187,
+      "last_timestamp": 1513923968.621299,
+      "duration_s": 226.44911193847656,
+      "nonpositive_timestamp_count": 0,
+      "backward_bus_timestamp_count": 0,
+      "zero_bus_interval_count": 0
+    },
+    {
+      "recording_id": "car_track_preliminary_train/Attack_free_KIA_Soul_train.csv",
+      "frames": 192516,
+      "unique_ids": 45,
+      "first_timestamp": 1513920254.785127,
+      "last_timestamp": 1513920346.907186,
+      "duration_s": 92.12205910682678,
+      "nonpositive_timestamp_count": 0,
+      "backward_bus_timestamp_count": 0,
+      "zero_bus_interval_count": 0
+    }
+  ],
+  "recording_comparison": {
+    "exact_capture_tuple_intersection": 0,
+    "timestamp_range_overlap_s": 0.0,
+    "gap_between_ranges_s": 3395.2650010585785,
+    "sequence_window_frames": 16,
+    "shared_unique_content_sequence_hashes": 0,
+    "final_windows_matching_preliminary": 0,
+    "sequence_test": "SHA-256 of ordered ID/DLC/payload windows; timestamps excluded; theoretical hash collision possible",
+    "session_independence": "Unconfirmed: no independent acquisition-session metadata. Non-overlap does not prove independence."
+  },
+  "source_integrity": "Both selected raw SHA-256 digests unchanged before/after ingestion and profiling"
+}
