@@ -108,3 +108,13 @@ docker compose up --build
 
 - API: http://localhost:8001
 - Interactive docs: http://localhost:8001/docs
+
+## Security engineering
+
+Offline analysis, leakage audits, CAN-ID rules and model-prediction evaluation are
+available through `python -m security`. See the [security usage guide](docs/security/README.md),
+[repository review](docs/security/REVIEW.md), [threat model](docs/security/THREAT_MODEL.md)
+and [team integration requirements](docs/security/INTEGRATION.md). Run the synthetic
+verification suite with `python -m unittest discover -v` after installing the
+existing experiment requirements. Real-data conclusions require authorized local
+feature files and aligned model predictions; none are included in this checkout.
