@@ -1,0 +1,4 @@
+F00_normal_traffic/local_outputs/*
+!F00_normal_traffic/local_outputs/.gitkeep
+# Explicitly permit the small, reviewed experiment tables.
+!F00_normal_traffic/results/*.csv
