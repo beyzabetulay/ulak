@@ -79,10 +79,12 @@ def make_plots(df, profile, comparison, output, config):
         ax.set(title=LABELS[recording], xlabel="Byte position (zero-based)", xticks=np.arange(8),
                yticks=x, yticklabels=names)
     axes[0].set_ylabel("CAN ID (hexadecimal)")
-    fig.colorbar(image, ax=axes.ravel().tolist(), label="Fraction of comparable consecutive pairs with a changed byte", shrink=.65, pad=.03)
     fig.suptitle("Payload-byte changes: gray = absent or no comparable pair")
-    # Fixed positions avoid a colorbar/tight_layout warning.
+    # Reserve a separate legend axis; do not shrink panels and then reposition
+    # them over a colorbar created by automatic layout.
     fig.subplots_adjust(left=.09, right=.80, bottom=.06, top=.94, wspace=.18)
+    color_axis = fig.add_axes([.84, .20, .025, .60])
+    fig.colorbar(image, cax=color_axis, label="Fraction of comparable consecutive pairs with a changed byte")
     fig.savefig(output / "payload_byte_variability.png", dpi=140, metadata={"Software": "De-CAN F00"}); plt.close(fig)
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 12), sharey=True)
