@@ -83,3 +83,24 @@ The tiny 0.002 mean-F1 difference between weight 3/threshold 0.7 and weight
 more recall for false alarms. No operational false-alarm budget was defined.
 Weight-1/threshold-0.5 reproduced all 16 earlier B validation fold metrics
 exactly. No outer test was revisited after selecting these candidates.
+
+## Subsequent exploratory Injection outer evaluation
+
+After the validation-only comparison above, the user authorized continuation.
+The B candidate with weight 1, threshold 0.5 and depth 3 was evaluated once on
+the previously inspected Injection outer recordings. Reproduction command:
+`python experiments/kia_xgboost_baseline.py --variant iat_id --fold unseen_injection`.
+Depth selection repeated the same validation comparison and reproduced it.
+The higher-weight near-tie was not selected for this follow-up.
+
+| Features | TP / attack total | Precision | Recall | F1 | FP / normal total | FPR |
+|---|---:|---:|---:|---:|---:|---:|
+| Standard (earlier) | 51,945 / 141,164 | 0.965 | 0.368 | 0.533 | 1,907 / 462,836 | 0.0041 |
+| + iat_id (new) | 37,927 / 141,164 | 0.632 | 0.269 | 0.377 | 22,082 / 462,836 | 0.0477 |
+| + both (earlier) | 25,933 / 141,164 | 0.657 | 0.184 | 0.287 | 13,558 / 462,836 | 0.0293 |
+
+B improves recall and F1 over D but produces more false alarms; A still has
+higher recall, precision and F1 and lower FPR on these recordings. Improved
+inner validation F1 did not transfer to this held-out attack. These are
+exploratory outcomes on reused outer tests; no further parameter choice was
+made from these scores. The experiment does not establish a general ranking.

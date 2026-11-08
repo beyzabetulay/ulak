@@ -61,7 +61,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, default=ROOT / 'kia_soul_features_all.parquet')
     parser.add_argument('--splits-dir', type=Path, default=ROOT / 'splits/generated/kia_soul')
-    parser.add_argument('--variant', choices=['standard', 'standard_timing'], default='standard')
+    parser.add_argument('--variant', choices=['standard', 'iat_id', 'iat_bus', 'standard_timing'], default='standard')
+    parser.add_argument('--fold', choices=['unseen_dos', 'unseen_injection', 'unseen_spoofing', 'unseen_replay'])
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if args.output is None:
@@ -76,7 +77,8 @@ def main():
         raise ValueError('Unexpected standard feature contract')
     if outer['variants']['full'] != TIMING_FEATURES + ['bus_count_100ms']:
         raise ValueError('Unexpected timing feature contract')
-    features = FEATURES if args.variant == 'standard' else TIMING_FEATURES
+    features = {'standard': FEATURES, 'iat_id': FEATURES + ['iat_id'],
+                'iat_bus': FEATURES + ['iat_bus'], 'standard_timing': TIMING_FEATURES}[args.variant]
     df = pd.read_parquet(args.input, columns=features + ['label_bin', 'recording_id'])
     if len(df) != outer['rows'] or not df.label_bin.isin([0, 1]).all() or df.recording_id.isna().any():
         raise ValueError('Invalid input labels, row count or recording IDs')
@@ -94,6 +96,8 @@ def main():
     for fold in inner['outer_folds']:
         name = fold['name']
         if name == 'official':
+            continue
+        if args.fold and name != args.fold:
             continue
         outer_fold = outer_by_name[name]
         train = load_indices(args.splits_dir / outer_fold['train']['indices'], len(df))

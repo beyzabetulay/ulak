@@ -12,6 +12,7 @@ folds with `python splits/make_kia_validation.py`. Then run:
 ```sh
 python experiments/kia_xgboost_baseline.py
 python experiments/kia_xgboost_baseline.py --variant standard_timing
+python experiments/kia_xgboost_baseline.py --variant iat_id --fold unseen_injection
 ```
 
 The outputs are `experiments/kia_decision_tree/local_outputs/xgboost_standard.json`
@@ -39,6 +40,11 @@ Timing comparisons were planned after earlier test results were observed;
 their outer test scores are exploratory rather than a pristine final evaluation.
 
 ## Validation-only feature ablation
+
+The baseline runner also accepts `iat_id` and `iat_bus` variants and an optional
+`--fold` to restrict evaluation to one unseen-attack outer setting. These commands
+do evaluate the chosen outer test after validation selection; they differ from
+the validation-only commands below. Variant outputs are saved separately.
 
 Run `python experiments/kia_validation_ablation.py --model xgboost --variant iat_id`
 and repeat with `iat_bus`, `standard` or `both` to compare the four feature
