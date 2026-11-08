@@ -1,5 +1,7 @@
 # Kia Spoofing: missed attacks and depth-6 false alarms
 
+Timing and payload-transition follow-up: `kia_spoofing_sequence.md`.
+
 Real-data descriptive follow-up to `kia_known_attack.md`; no parameters,
 thresholds or features were tuned. XGBoost depths 3/6 are retrained on the same
 recording partitions and all reproduced confusion counts must match the earlier
