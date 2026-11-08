@@ -25,9 +25,10 @@ class XGBoostBaselineTests(unittest.TestCase):
     def test_training_on_synthetic_data(self):
         X = np.array([[0], [0], [1], [1], [0], [1]], dtype=np.float32)
         y = np.array([0, 0, 1, 1, 0, 1], dtype=np.int8)
-        metric, seconds = run_model(X, y, np.array([0, 1, 2, 3]), np.array([4, 5]),
-                                    {'max_depth': 3, 'n_estimators': 2})
+        metric, training, seconds = run_model(X, y, np.array([0, 1, 2, 3]), np.array([4, 5]),
+                                              {'max_depth': 3, 'n_estimators': 2}, training_metrics=True)
         self.assertEqual(sum(metric[k] for k in ('tn', 'fp', 'fn', 'tp')), 2)
+        self.assertEqual(sum(training[k] for k in ('tn', 'fp', 'fn', 'tp')), 4)
         self.assertGreaterEqual(seconds, 0)
 
 

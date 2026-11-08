@@ -15,6 +15,7 @@ from xgboost import XGBClassifier
 
 ROOT = Path(__file__).resolve().parents[1]
 FEATURES = ['can_id_dec', 'dlc'] + [f'byte_{i}' for i in range(8)]
+TIMING_FEATURES = FEATURES + ['iat_id', 'iat_bus']
 CANDIDATES = [
     {'max_depth': 3, 'n_estimators': 100},
     {'max_depth': 6, 'n_estimators': 100},
@@ -37,12 +38,16 @@ def scores(y, prediction):
             'attack_f1': float(f1[0]), 'false_positive_rate': float(fp / (fp + tn)) if fp + tn else None}
 
 
-def run_model(X, y, train, valid, params):
+def run_model(X, y, train, valid, params, training_metrics=False):
     model = XGBClassifier(**COMMON, **params)
     started = time.monotonic()
     model.fit(X[train], y[train])
     predicted = (model.predict_proba(X[valid])[:, 1] >= 0.5).astype(np.int8)
-    return scores(y[valid], predicted), round(time.monotonic() - started, 2)
+    train_scores = None
+    if training_metrics:
+        training_prediction = (model.predict_proba(X[train])[:, 1] >= 0.5).astype(np.int8)
+        train_scores = scores(y[train], training_prediction)
+    return scores(y[valid], predicted), train_scores, round(time.monotonic() - started, 2)
 
 
 def load_indices(path, n):
@@ -56,8 +61,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, default=ROOT / 'kia_soul_features_all.parquet')
     parser.add_argument('--splits-dir', type=Path, default=ROOT / 'splits/generated/kia_soul')
-    parser.add_argument('--output', type=Path, default=ROOT / 'experiments/kia_decision_tree/local_outputs/xgboost.json')
+    parser.add_argument('--variant', choices=['standard', 'standard_timing'], default='standard')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if args.output is None:
+        args.output = ROOT / f'experiments/kia_decision_tree/local_outputs/xgboost_{args.variant}.json'
     outer_path = args.splits_dir / 'manifest.json'
     inner_dir = args.splits_dir / 'validation_balanced'
     outer = json.loads(outer_path.read_text())
@@ -66,15 +74,18 @@ def main():
         raise ValueError('Input or outer manifest hash does not match validation manifest')
     if outer['variants']['standard'] != FEATURES:
         raise ValueError('Unexpected standard feature contract')
-    df = pd.read_parquet(args.input, columns=FEATURES + ['label_bin', 'recording_id'])
+    if outer['variants']['full'] != TIMING_FEATURES + ['bus_count_100ms']:
+        raise ValueError('Unexpected timing feature contract')
+    features = FEATURES if args.variant == 'standard' else TIMING_FEATURES
+    df = pd.read_parquet(args.input, columns=features + ['label_bin', 'recording_id'])
     if len(df) != outer['rows'] or not df.label_bin.isin([0, 1]).all() or df.recording_id.isna().any():
         raise ValueError('Invalid input labels, row count or recording IDs')
-    X = df[FEATURES].fillna(-1).to_numpy(dtype=np.float32)
+    X = df[features].fillna(-1).to_numpy(dtype=np.float32)
     y = df.label_bin.to_numpy(dtype=np.int8)
     groups = df.recording_id.to_numpy()
     results = {'input_sha256': outer['sha256'], 'outer_manifest_sha256': digest(outer_path),
                'validation_manifest_sha256': digest(inner_dir / 'manifest.json'),
-               'features': FEATURES, 'missing_value': -1, 'threshold': 0.5,
+               'variant': args.variant, 'features': features, 'missing_value': -1, 'threshold': 0.5,
                'selection': 'highest unweighted mean validation attack F1; first candidate wins ties',
                'candidates': CANDIDATES, 'common_parameters': COMMON,
                'versions': {'python': platform.python_version(), 'numpy': np.__version__, 'pandas': pd.__version__,
@@ -104,15 +115,15 @@ def main():
         for params in CANDIDATES:
             validations = []
             for number, (a, b) in enumerate(prepared, 1):
-                metric, seconds = run_model(X, y, a, b, params)
-                validations.append({'fold': number, 'metrics': metric, 'seconds': seconds})
+                metric, train_metric, seconds = run_model(X, y, a, b, params, training_metrics=True)
+                validations.append({'fold': number, 'metrics': metric, 'training_metrics': train_metric, 'seconds': seconds})
                 print(f'{name} depth={params["max_depth"]} validation={number}: {metric} ({seconds}s)', flush=True)
             configs.append({'parameters': params, 'validation': validations,
                             'mean_attack_f1': float(np.mean([v['metrics']['attack_f1'] for v in validations]))})
         best = max(configs, key=lambda c: c['mean_attack_f1'])
-        metric, seconds = run_model(X, y, train, test, best['parameters'])
+        metric, train_metric, seconds = run_model(X, y, train, test, best['parameters'], training_metrics=True)
         results['folds'].append({'name': name, 'configurations': configs, 'selected': best['parameters'],
-                                 'test': metric, 'test_seconds': seconds})
+                                 'test': metric, 'training_metrics': train_metric, 'test_seconds': seconds})
         print(f'{name} selected={best["parameters"]} test={metric} ({seconds}s)', flush=True)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(results, indent=2) + '\n')
