@@ -69,6 +69,16 @@ These hand-picked values are a small exploratory comparison, not an exhaustive
 search; class weights are training-only. Thresholds and model choice must not
 be selected using the previously inspected outer-test results.
 
+The `sequence` variant adds same-ID previous-payload changed-bit count and a
+repeat indicator to `iat_id`. These transitions are computed within each
+recording in stable timestamp order, without labels, and restored to original
+parquet row positions. Repeat is derived from changed bits and is therefore
+redundant information. First frames and length changes use the -1 sentinel.
+This is exploratory and timestamp sorting does not prove live arrival order.
+Use `--model catboost` for a CatBoost comparison; it uses numeric CAN IDs,
+100 iterations, depths 3/6, learning rate 0.1, Plain boosting and CPU threads.
+The same numeric feature representation is used for both boosting libraries.
+
 Folds contain few recordings with very unequal attack counts, so the fold mean
 can be unstable and the selection is not optimized for a specified false-alarm
 budget. A held-out attack is absent from its inner validation; performance on it
