@@ -239,6 +239,29 @@ modelin evrensel olarak iyi veya kötü olduğunu kanıtlamaz: kayıt sayısı a
 kayıtlar daha önce incelendi ve bağımsız oturum oldukları doğrulanmadı.
 [Bilinen saldırı raporu](kia_known_attack.md)
 
+### CatBoost ile aynı düzen
+
+Aynı kayıtlar ve birebir aynı eğitim/test satırlarıyla CatBoost derinlik 3 ve 6
+denendi. Ayarlar iç validation'daki CatBoost ile aynıdır: 100 iterasyon, hız 0,1,
+`Plain` boosting, seed 42, eşik 0,5, sayısal ID. Kazanan seçilmedi.
+
+| Ayrılan kayıt | XGBoost 3 / 6 F1 | CatBoost 3 / 6 F1 | CatBoost 3 / 6 normal FPR |
+|---|---:|---:|---:|
+| Injection final-first | 0,907 / 0,968 | 0,838 / 0,951 | %1,07 / %1,66 |
+| Injection preliminary | 0,974 / 0,997 | 0,949 / 0,988 | %0,21 / %0,04 |
+| Spoofing final-first | 0,000 / 0,000 | 0,000 / 0,000 | %0 / %0 |
+| Spoofing final-second | 0,666 / 0,666 | 0,000 / 0,000 | %0,11 / %0,02 |
+| Spoofing preliminary | 0,978 / 0,640 | 0,941 / 0,990 | %0,10 / %0 |
+
+Injection'da CatBoost iyi aktarım gösterdi ama aynı derinlikteki XGBoost'un
+biraz altında kaldı. Preliminary Spoofing'de CatBoost derinlik 6 sıfır yanlış
+alarmla F1 0,990 aldı; XGBoost derinlik 6 burada 5.324 yanlış alarm vermişti.
+Final-second Spoofing'de ise CatBoost 67.080 saldırının hiçbirini yakalamadı;
+XGBoost'un iki derinliği tam yarısını (33.540) yakalamıştı. Bu farkın nedeni
+incelenmedi. 130 saldırılı kayıtta dört boosting varyantı da 0/130 yakaladı.
+Sıralama kayda göre değişiyor; beş ilişkili ve daha önce incelenmiş kayıttan
+genel bir kazanan çıkarılamaz.
+
 ## 11. Spoofing: 130 kaçırılan saldırı ve yanlış alarmlar
 
 İki XGBoost modeli yeniden eğitildi; confusion count'lar önceki deneyle eşleşti.
@@ -345,8 +368,10 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
 - Dış `unseen_*` sonuçları ve 130 Spoofing mesajı tekrar tekrar incelenmiştir;
   bunlar artık el değmemiş nihai test değildir. Özellikler incelenen kayıt
   üzerinden önerildiği için bu kayıttaki sonuçlarla nihai başarı iddiası yapılamaz.
-- CatBoost'u bilinen saldırı/farklı kayıt düzeninde karşılaştırmak ve daha sonra
-  bağımsız kayıt veya ikinci veri kümesi kullanmak mantıklı adaylardır. Dış
+- CatBoost bilinen saldırı/farklı kayıt düzeninde karşılaştırıldı (§10); sonuç
+  kayda göre değişti. Final-second Spoofing'de CatBoost'un 0 ve XGBoost'un tam
+  %50 recall vermesinin nedeni açık bir teşhis adayıdır. Bağımsız kayıt veya
+  ikinci veri kümesi kullanmak mantıklı sonraki adımdır. Dış
   repodaki entropi ve pencere özellikleri de kontrollü ayrı deneylerdir; henüz
   bu oturumda uygulanmadılar.
 
@@ -358,7 +383,8 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
   ve `python splits/make_kia_splits.py`.
 - İç fold: `python splits/make_kia_validation.py`.
 - XGBoost ve özellik deneyleri: [çalıştırma açıklaması](../kia_decision_tree/XGBOOST.md).
-- Bilinen saldırı: `python experiments/kia_known_attack.py`.
+- Bilinen saldırı: `python experiments/kia_known_attack.py`; CatBoost için
+  `--models catboost_depth3 catboost_depth6 --output experiments/kia_decision_tree/local_outputs/known_attack_catboost.json`.
 - Spoofing teşhisi: `python experiments/kia_spoofing_diagnosis.py`, sonra
   `python experiments/kia_spoofing_sequence.py`.
 - CatBoost/sıra: `python experiments/kia_validation_ablation.py --model catboost --variant iat_id`
@@ -366,7 +392,7 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
 
 XGBoost/CatBoost deneylerinde Python 3.14.5, NumPy 2.4.6, pandas 2.3.3,
 scikit-learn 1.9.0, XGBoost 3.4.1; CatBoost deneyinde ayrıca 1.2.10 kullanıldı.
-İlgili son kontrol çalıştırmasında 13 yapay/izolasyon testi geçti. Deneylerin
+Son kontrol çalıştırmasında depodaki 69 yapay/izolasyon testinin tümü geçti. Deneylerin
 ayrıntılı sonuç dosyaları `experiments/kia_decision_tree/local_outputs/` altında
 yerel ve Git tarafından yoksayılmıştır; veri ve ham kayıtlar commit edilmez.
 

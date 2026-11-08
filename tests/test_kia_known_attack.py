@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from experiments.kia_known_attack import known_recording_folds
+from experiments.kia_known_attack import DEFAULT_MODELS, make_model, known_recording_folds
 
 
 class KnownAttackTests(unittest.TestCase):
@@ -22,6 +22,11 @@ class KnownAttackTests(unittest.TestCase):
             self.assertTrue(df.iloc[train].attack_type.eq(attack).any())
             self.assertNotIn(5, train)
             self.assertNotIn(5, test)
+
+    def test_catboost_matches_validation_settings(self):
+        params = make_model('catboost_depth3').get_params()
+        self.assertEqual((params['depth'], params['iterations'], params['boosting_type']), (3, 100, 'Plain'))
+        self.assertNotIn('catboost_depth3', DEFAULT_MODELS)
 
 
 if __name__ == '__main__':
