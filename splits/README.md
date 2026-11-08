@@ -60,19 +60,24 @@ Share of test attack frames whose CAN ID never occurs in the fold's training row
 ### Inner validation for Kia
 
 After generating the Kia outer splits, run `python splits/make_kia_validation.py`.
-This creates five recording-grouped GroupKFold train/validation pairs inside
+This creates four recording-grouped train/validation pairs inside
 each outer training partition, including `official`; its outer test remains
 untouched. The original manifest and indices are not modified. The generated
-`splits/generated/kia_soul/validation/manifest.json` records the input and outer
+`splits/generated/kia_soul/validation_balanced/manifest.json` records the input and outer
 manifest hashes, absolute parquet row-position index files, recording names,
 class counts and row counts by recording attack type for each part. Check both hashes
 before reusing these indices; regenerate if either input or outer splits change.
 Use `--folds`, `--input`, `--splits-dir` and `--output-dir` to override defaults.
 
-The Kia outer training sets contain few recordings. GroupKFold balances row
-counts, not attack types or classes: some validation folds can have no attack
-frames or lack particular attack types. Report fold support and per-fold metrics;
-do not interpret a missing class as a measured recall. Inner validation cannot
+The deterministic assignment places recordings containing both labels into
+different folds first, then greedily balances row counts. It fails if there are
+fewer mixed-label recordings than folds. Four is the common maximum for these
+Kia outer training sets: `unseen_spoofing` has only four mixed recordings.
+This uses training labels for split construction, never outer-test labels. It
+does not balance attack types or guarantee independent collection sessions;
+some attack types have only one recording, and recording-level separation is not
+proof of session independence. Report fold support and per-recording metrics.
+Inner validation cannot
 measure the held-out outer attack type. Select features and hyperparameters using
 inner folds only, refit on the outer training partition, then evaluate on its
 outer test. Previously inspected test results are not a pristine final holdout.

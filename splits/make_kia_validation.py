@@ -5,15 +5,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import GroupKFold
-
 from make_splits import sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def make_folds(df, outer_train, outer_test, n_splits=5):
-    """Return absolute row positions, keeping recordings and outer test isolated."""
+def make_folds(df, outer_train, outer_test, n_splits=4):
+    """Assign whole recordings, ensuring each validation fold has both labels."""
     outer_train = np.asarray(outer_train)
     outer_test = np.asarray(outer_test)
     for name, positions in [('train', outer_train), ('test', outer_test)]:
@@ -29,11 +27,26 @@ def make_folds(df, outer_train, outer_test, n_splits=5):
         raise ValueError('Missing recording_id')
     if set(groups) & test_groups:
         raise ValueError('Outer train and test recordings overlap')
-    if groups.nunique() < n_splits:
-        raise ValueError(f'Need at least {n_splits} training recordings, got {groups.nunique()}')
-    splitter = GroupKFold(n_splits=n_splits)
-    return [(outer_train[train], outer_train[valid])
-            for train, valid in splitter.split(np.zeros(len(outer_train)), groups=groups)]
+    rows = df.iloc[outer_train]
+    counts = rows.groupby('recording_id', sort=True).label_bin.agg(['size', 'sum'])
+    mixed = counts[(counts['sum'] > 0) & (counts['sum'] < counts['size'])]
+    if len(mixed) < n_splits:
+        raise ValueError(f'Need at least {n_splits} recordings containing both classes, got {len(mixed)}')
+    # Place the largest mixed recordings first, one per fold. Assign the rest to
+    # the smallest fold; stable identifiers break ties deterministically.
+    ordered_mixed = sorted(mixed.index, key=lambda key: (-counts.loc[key, 'size'], key))
+    remaining = sorted(counts.index.difference(mixed.index), key=lambda key: (-counts.loc[key, 'size'], key))
+    assignment = [[] for _ in range(n_splits)]
+    sizes = [0] * n_splits
+    for key in ordered_mixed + remaining:
+        fold = min(range(n_splits), key=lambda i: (sizes[i], i))
+        assignment[fold].append(key)
+        sizes[fold] += int(counts.loc[key, 'size'])
+    result = []
+    for recording_ids in assignment:
+        mask = groups.isin(recording_ids).to_numpy()
+        result.append((outer_train[~mask], outer_train[mask]))
+    return result
 
 
 def describe(df, indices, filename):
@@ -48,8 +61,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input', type=Path, default=ROOT / 'kia_soul_features_all.parquet')
     parser.add_argument('--splits-dir', type=Path, default=ROOT / 'splits/generated/kia_soul')
-    parser.add_argument('--output-dir', type=Path, default=ROOT / 'splits/generated/kia_soul/validation')
-    parser.add_argument('--folds', type=int, default=5)
+    parser.add_argument('--output-dir', type=Path, default=ROOT / 'splits/generated/kia_soul/validation_balanced')
+    parser.add_argument('--folds', type=int, default=4)
     args = parser.parse_args()
     if args.folds < 2:
         parser.error('--folds must be at least 2')
@@ -61,7 +74,8 @@ def main():
         raise ValueError('Invalid input rows, labels or grouping metadata')
     result = {'input_sha256': outer['sha256'], 'outer_manifest_sha256': sha256(args.splits_dir / 'manifest.json'),
               'index_semantics': 'zero-based row positions in the unchanged input parquet',
-              'group': 'recording_id', 'method': 'GroupKFold', 'n_splits': args.folds, 'outer_folds': []}
+              'group': 'recording_id', 'method': 'deterministic mixed-recording-first greedy row balance',
+              'n_splits': args.folds, 'outer_folds': []}
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for outer_fold in outer['folds']:
         name = outer_fold['name']
