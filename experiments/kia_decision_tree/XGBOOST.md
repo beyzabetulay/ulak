@@ -38,6 +38,31 @@ recording. Missing values use -1. The `bus_count_100ms` feature is excluded.
 Timing comparisons were planned after earlier test results were observed;
 their outer test scores are exploratory rather than a pristine final evaluation.
 
+## Validation-only feature ablation
+
+Run `python experiments/kia_validation_ablation.py --model xgboost --variant iat_id`
+and repeat with `iat_bus`, `standard` or `both` to compare the four feature
+sets. Replace `xgboost` with `tree` to evaluate a depth-6 decision tree. XGBoost
+uses both depths 3 and 6; a tree uses the existing notebook's depth 6. Each
+command saves fold counts, precision, recall, F1, FPR, hashes and versions to
+an ignored `local_outputs/ablation_<model>_<variant>.json` file. It uses only
+the four inner validation folds from each unseen-attack outer training split;
+it does not fit on or predict outer-test rows. The official split is skipped.
+It verifies recording separation and partition coverage, but individual index
+files are not cryptographically bound by the outer manifest.
+
+Report individual fold support and false positives alongside the unweighted
+mean F1. The outer held-out attack is absent from the corresponding inner folds;
+their scores do not directly measure that attack. Outcomes depend on a small
+number of recordings and are exploratory because the outer tests were seen.
+
+For the limited parameter follow-up, set `--depth 3 --class-weight 1` (or 3),
+`--thresholds 0.3 0.5 0.7`, and an explicit ignored `--output` path. Each model
+is fitted once per fold and all thresholds use the same validation scores.
+These hand-picked values are a small exploratory comparison, not an exhaustive
+search; class weights are training-only. Thresholds and model choice must not
+be selected using the previously inspected outer-test results.
+
 Folds contain few recordings with very unequal attack counts, so the fold mean
 can be unstable and the selection is not optimized for a specified false-alarm
 budget. A held-out attack is absent from its inner validation; performance on it
