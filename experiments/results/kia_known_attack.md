@@ -1,5 +1,7 @@
 # Kia known-attack transfer across recordings
 
+The descriptive follow-up is in `kia_spoofing_diagnosis.md`.
+
 Real-data exploratory experiment on the local HCRL Kia feature parquet. Unlike
 leave-one-attack-out, each evaluation recording has another recording of the
 same attack type available in training. All remaining HCRL training recordings
