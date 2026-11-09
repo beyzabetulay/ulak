@@ -11,7 +11,9 @@ frozen beforehand on inner validation only.
 session** (see [Release files continue training sessions](#release-files-continue-training-sessions)).
 The release test is therefore a forward-in-time holdout of the same sessions,
 not a test on new recordings. Scores across recordings of different sessions
-come only from the inner folds and are much lower (F1 0.375-0.859).
+are lower and vary by type: inner folds give F1 0.375-0.859 (all types
+pooled); leaving one recording out per type gives Injection 0.968/0.997 and
+Spoofing 0-0.666 ([known-attack report](kia_known_attack.md)).
 
 This differs from the earlier leave-one-attack-out (`unseen_*`) experiments,
 where the tested attack type was absent from training. Scores of the two
@@ -196,5 +198,6 @@ probabilities and the attempt file. The rejected sampled selection is kept as
 Pass the sha256 that your own `select` prints; it can differ from the hash
 above because the selection file records run times and library versions.
 `release` writes `release_test_attempt.json` before fitting, so a crash also
-uses up the attempt. Delete the attempt file only for a deliberate rerun and
+uses up the attempt. For a deliberate rerun delete `release_test_attempt.json` and,
+after a completed run, `release_test.json` in `experiments/kia_decision_tree/local_outputs/`, and
 record that rerun in this report.

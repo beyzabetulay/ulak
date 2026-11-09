@@ -25,15 +25,18 @@ terimler için §2. §15 ve öncesi, o anki bilgiyle yazılmış geçmiş kayıt
    kaydındaki normal mesajları da işaretliyor (saniyede 73 yanlış alarm).
 5. **Release dosyaları yeni kayıt değil.** Her biri bir eğitim kaydının
    zamanda devamı; release'teki 0,99-1,00 "aynı sürüşün sonraki dakikaları"
-   demek. Farklı kayıtlar arası skor yalnız iç fold'larda: F1 0,375-0,859.
+   demek. Başka kayıtta skorlar daha düşük ve türe göre çok değişiyor
+   (aşağıdaki tablo; iç fold'larda tüm türler birlikte F1 0,375-0,859).
 6. **Replay'i ritim çözüyor.** Kopya, ID'nin düzenli ritminin dışına düşüyor.
    Sonata'da sadece aralık ve sayımla F1 0,620, iki/üç önceki mesaja olan süre
    eklenince 0,877. Kia release replay dosyasında release testindeki 0,445'ten
    0,903'e. Sonata dosyasına tasarımdan önce bakıldığı için yarı görülmüş test;
    saldırı anlarında yanlış alarm hâlâ yüksek ([replay ritim testi](replay_rhythm_test.md)).
-7. **Sonraki adım** (§15'teki ve README'deki eski "sonraki adım"ların yerine
-   geçer): gerçekten yeni kayıtta test. Kullanılmamış Sonata ve Spark kayıtları
-   (aşağıdaki tablo), ID'siz özelliklerle araçlar arası test için duruyor.
+7. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
+   Future Work yalnız ikinci veri setlerini anlatır): gerçekten yeni kayıtta test. Kullanılmamış Sonata ve Spark kayıtları
+   (aşağıdaki liste) duruyor. Aday: DoS, Injection ve Spoofing için ritim
+   modelindeki gibi ID'siz zamanlama ve içerik-değişimi özellikleriyle Kia'da
+   eğitip Sonata'nın kullanılmamış kayıtlarında test etmek; henüz planlanmadı.
 
 ### Saldırı türüne göre güncel durum
 
@@ -47,7 +50,7 @@ depth 6, eşik 0,5).
 | DoS | 1,000 | yok (tek kayıt) | Düşük: ID 0 ezberi; ID'siz model `iat_id` ile 0,977 |
 | Injection | 0,990 / 0,997 | 0,968 (final) / 0,997 (prelim) | Orta: iki kayıt da aynı aracın, iki farklı saldırı biçimi |
 | Spoofing | 1,000 / 0,996; 170 saldırılı dosyada 0 | 0,666 (final-2nd), 0,640 (prelim), 0 (final-1st, 130 saldırı) | Düşük: kayda göre çok değişiyor |
-| Replay | 0,445 (C); ritim modeli R2 ile 0,903 | Sonata 0,877 (ritim modeli, yarı görülmüş) | Orta: tek Kia kaydı, iki araçta aynı saldırı düzeni |
+| Replay | 0,445 (C); ritim modeli R2 ile 0,903 | Sonata 0,877 (ritim modeli, yarı görülmüş) | Düşük-orta: Sonata yarı görülmüş test, tek Kia kaydı, iki araçta aynı saldırı düzeni, saldırı anlarında saniyede 221,5 yanlış alarm |
 
 ### Hangi dosya nerede kullanıldı
 
@@ -62,7 +65,7 @@ Spark 4 eğitim; 8 release dosyası Sonata veya Spark).
 Ritim deneyinde ID periyotları Kia ve Sonata'nın final_1st `Attack_free`
 kayıtlarından ölçülür; bu iki dosya eğitim ya da test satırı olarak kullanılmaz.
 
-**Hiç kullanılmayan veri:** Sonata `Flooding`, `Fuzzy` (preliminary ve final_1st),
+**Hiç kullanılmayan veri:** Sonata `Flooding` (preliminary), `Fuzzy` (preliminary, final_1st),
 `Malfunction` (preliminary, final_1st, final_2nd); Spark'ın 4 kaydı (`Attack_free`,
 `Flooding`, `Fuzzy`, `Malfunction`); 8 Sonata/Spark release dosyası.
 
@@ -110,7 +113,9 @@ mesaja normal diyen bir model saldırıları hiç yakalamadan yüksek accuracy a
 - **Seen-type fold:** Validation'daki her saldırı türünün iç eğitimde de
   bulunduğu iç fold.
 - **Tek seferlik koruma:** Test komutu, seçim dosyasının sha256'sı tutmazsa ya
-  da daha önce çalıştırılmışsa (`*_attempt.json` varsa) reddeder.
+  da daha önce çalıştırılmışsa (`*_attempt.json` ya da sonuç dosyası varsa)
+  reddeder. Bilinçli tekrar için ne silineceği raporların Reproduction
+  bölümünde.
 
 Bir kayıt saldırı içerse bile içindeki bütün mesajlar saldırı değildir. Saldırı
 türü dosya/kayıt bağlamını, `label_bin` ise tek mesajın etiketini anlatır.

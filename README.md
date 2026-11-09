@@ -78,6 +78,8 @@ report): [experiments/results/oturum_deney_ve_bulgular.md](experiments/results/o
 
 ## Future Work
 
+- Current next step for the Kia work: see the summary at the top of
+  [experiments/results/oturum_deney_ve_bulgular.md](experiments/results/oturum_deney_ve_bulgular.md).
 - Secondary datasets for cross-dataset generalization:
   CAN-MIRGU (only the sample part has been inspected so far) and the ROAD
   dataset.

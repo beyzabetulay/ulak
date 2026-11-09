@@ -159,5 +159,7 @@ probabilities.
 
 Pass the sha256 that your own `select` prints; it can differ from the hash
 above if library versions differ. `test` writes `replay_rhythm_test_attempt.json`
-before fitting, so a crash also uses up the attempt. Delete the attempt file
-only for a deliberate rerun and record that rerun in this report.
+before fitting, so a crash also
+uses up the attempt. For a deliberate rerun delete `replay_rhythm_test_attempt.json` and,
+after a completed run, `replay_rhythm_test.json` in `experiments/kia_decision_tree/local_outputs/`, and
+record that rerun in this report.
