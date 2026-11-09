@@ -7,6 +7,68 @@ alınmış **gerçek veri gözlemleridir**. Yazılım kontrol testleri ise yapay
 göstermez. Sonuçların ayrıntıları ve tekrar çalıştırma komutları, bağlantı verilen
 ayrı raporlarda bulunur.
 
+## Kısa özet: ne öğrendik
+
+Bölümler zaman sırasıyla yazıldı ve eski bölümlerdeki bazı sonuçlar sonraki
+bölümlerde düzeltildi. Güncel durum bu özettir; ayrıntı için §15a ve §15b,
+terimler için §2. §15 ve öncesi, o anki bilgiyle yazılmış geçmiş kayıttır.
+
+1. **`unseen_*` sonuçlarındaki %0'lar hata değil.** Sınıflandırıcıya hiç
+   görmediği saldırı türü soruldu; hat doğru çalışıyor
+   ([teşhis](kia_unseen_diagnosis.md), §15a).
+2. **DoS'u yakalayan şey ID kısayolu.** ID çıkarılınca DoS recall 1,000'den
+   0,000'a düşüyor; ID'siz modele `iat_id` eklenince 0,977'ye çıkıyor
+   ([release testi](kia_release_test.md)).
+3. **ID'yi gizlemek yetmiyor.** Normal mesajların %97,1'inde (DLC, byte'lar)
+   ID'yi belli ediyor; `id_masked` "ID açıkça verilmedi" demek.
+4. **`bus_count_100ms` kayıt kısayolu.** Replay'i %92 yakalıyor ama saldırı
+   kaydındaki normal mesajları da işaretliyor (saniyede 73 yanlış alarm).
+5. **Release dosyaları yeni kayıt değil.** Her biri bir eğitim kaydının
+   zamanda devamı; release'teki 0,99-1,00 "aynı sürüşün sonraki dakikaları"
+   demek. Başka kayıtta skorlar daha düşük ve türe göre çok değişiyor
+   (aşağıdaki tablo; iç fold'larda tüm türler birlikte F1 0,375-0,859).
+6. **Replay'i ritim çözüyor.** Kopya, ID'nin düzenli ritminin dışına düşüyor.
+   Sonata'da sadece aralık ve sayımla F1 0,620, iki/üç önceki mesaja olan süre
+   eklenince 0,877. Kia release replay dosyasında release testindeki 0,445'ten
+   0,903'e. Sonata dosyasına tasarımdan önce bakıldığı için yarı görülmüş test;
+   saldırı anlarında yanlış alarm hâlâ yüksek ([replay ritim testi](replay_rhythm_test.md)).
+7. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
+   Future Work yalnız ikinci veri setlerini anlatır): gerçekten yeni kayıtta test. Kullanılmamış Sonata ve Spark kayıtları
+   (aşağıdaki liste) duruyor. Aday: DoS, Injection ve Spoofing için ritim
+   modelindeki gibi ID'siz zamanlama ve içerik-değişimi özellikleriyle Kia'da
+   eğitip Sonata'nın kullanılmamış kayıtlarında test etmek; henüz planlanmadı.
+
+### Saldırı türüne göre güncel durum
+
+F1, saldırı mesajları için. "Aynı sürüş" release dosyasıdır (eğitim kaydının
+devamı); "başka kayıt", aynı türün diğer kaydı eğitimdeyken bir kaydın tamamen
+dışarıda bırakıldığı testtir ([bilinen saldırı](kia_known_attack.md), XGBoost
+depth 6, eşik 0,5).
+
+| Tür | Aynı sürüş (release, varyant C) | Başka kayıt | Ne kadar güvenilir |
+|---|---|---|---|
+| DoS | 1,000 | yok (tek kayıt) | Düşük: ID 0 ezberi; ID'siz model `iat_id` ile 0,977 |
+| Injection | 0,990 / 0,997 | 0,968 (final) / 0,997 (prelim) | Orta: iki kayıt da aynı aracın, iki farklı saldırı biçimi |
+| Spoofing | 1,000 / 0,996; 170 saldırılı dosyada 0 | 0,666 (final-2nd), 0,640 (prelim), 0 (final-1st, 130 saldırı) | Düşük: kayda göre çok değişiyor |
+| Replay | 0,445 (C); ritim modeli R2 ile 0,903 | Sonata 0,877 (ritim modeli, yarı görülmüş) | Düşük-orta: Sonata yarı görülmüş test, tek Kia kaydı, iki araçta aynı saldırı düzeni, saldırı anlarında saniyede 221,5 yanlış alarm |
+
+### Hangi dosya nerede kullanıldı
+
+Ham dosyalar `car_track_*` klasörlerindedir (37 dosya: Kia 16, Sonata 9 eğitim,
+Spark 4 eğitim; 8 release dosyası Sonata veya Spark).
+
+| Deney | Eğitim | Ayar seçimi | Test |
+|---|---|---|---|
+| Release sınıflandırma ([rapor](kia_release_test.md)) | 9 Kia eğitim kaydı | aynı 9 kayıt, 2 iç fold (DoS ve Replay hep eğitimde) | 7 Kia release dosyası |
+| Replay ritim ([rapor](replay_rhythm_test.md)) | Kia final_2nd `Replay_dataset`, Kia preliminary `Attack_free` | aynı iki kaydın ilk ve ikinci yarısı | Sonata final_2nd `Replay_dataset`, Sonata preliminary `Attack_free` (temiz sürüş yanlış alarmı), Kia final_2nd release `File_4` |
+
+Ritim deneyinde ID periyotları Kia ve Sonata'nın final_1st `Attack_free`
+kayıtlarından ölçülür; bu iki dosya eğitim ya da test satırı olarak kullanılmaz.
+
+**Hiç kullanılmayan veri:** Sonata `Flooding` (preliminary), `Fuzzy` (preliminary, final_1st),
+`Malfunction` (preliminary, final_1st, final_2nd); Spark'ın 4 kaydı (`Attack_free`,
+`Flooding`, `Fuzzy`, `Malfunction`); 8 Sonata/Spark release dosyası.
+
 ## 1. Projenin sorusu
 
 ULAK, CAN hattındaki her mesaj için normal mi saldırı mı olduğunu tahmin etmeye
@@ -39,6 +101,21 @@ mesaja normal diyen bir model saldırıları hiç yakalamadan yüksek accuracy a
 - **Precision:** Saldırı denilen mesajların ne kadarının gerçekten saldırı olduğu.
 - **F1:** Precision ve recall'u birlikte değerlendiren skor.
 - **FPR:** Normal mesajların ne kadarına yanlışlıkla saldırı dendiği.
+- **AUPRC:** Eşikten bağımsız sıralama skoru; model saldırıları normal
+  mesajların önüne ne kadar iyi diziyor (1 kusursuz). Son iki deneyde ayar
+  seçimi buna göre yapıldı.
+- **OOF (out-of-fold):** Her satırın, o satırı eğitimde görmemiş fold modeliyle
+  tahmin edilmesi. Karar eşiği bu tahminlerde F1'i en yükseğe çıkaran değer
+  olarak donduruldu ("OOF-F1 eşiği").
+- **`unseen_*` / `official`:** Dış bölmeler. `unseen_*` bir saldırı türünün tüm
+  kayıtlarını eğitimden çıkarır; `official` HCRL eğitim klasörlerinde eğitip
+  release dosyalarında test eder ([split açıklaması](../../splits/README.md)).
+- **Seen-type fold:** Validation'daki her saldırı türünün iç eğitimde de
+  bulunduğu iç fold.
+- **Tek seferlik koruma:** Test komutu, seçim dosyasının sha256'sı tutmazsa ya
+  da daha önce çalıştırılmışsa (`*_attempt.json` ya da sonuç dosyası varsa)
+  reddeder. Bilinçli tekrar için ne silineceği raporların Reproduction
+  bölümünde.
 
 Bir kayıt saldırı içerse bile içindeki bütün mesajlar saldırı değildir. Saldırı
 türü dosya/kayıt bağlamını, `label_bin` ise tek mesajın etiketini anlatır.
@@ -354,7 +431,10 @@ sayısı, zaman aralığının pencere ortalaması ve standart sapması. Bunlar 
 ayrı, kayıt sınırları ve geçmişe nedensellik korunarak denenmelidir. Dış
 repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını göstermez.
 
-## 15. Son durum, sınırlar ve sonraki adım
+## 15. Son durum, sınırlar ve sonraki adım (ilk oturum)
+
+Bu bölüm ilk oturumun sonundaki durumdur; Replay ve release sonuçları ile
+sonraki adım §15a, §15b ve baştaki özetle güncellendi.
 
 - Decision tree, XGBoost ve sınırlı CatBoost karşılaştırmaları hazırdır. Bir
   modelin genel olarak en iyi olduğu sonucuna varılamaz.
@@ -387,11 +467,39 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
 - Soru değiştirildi: tüm eğitim kayıtlarında eğitip HCRL release dosyalarında
   aynı saldırı türlerini yakalamak. Ayarlar yalnız görülen-tür iç fold'larında
   seçildi, release testi bir kez çalıştırıldı.
-- Sonuç: DoS, Injection ve iki büyük Spoofing dosyasında F1 0,99-1,00. ID
+- Sonuç (aynı sürüşün devamında, aşağıdaki maddeye bakın): DoS, Injection ve
+  iki büyük Spoofing dosyasında F1 0,99-1,00; 170 saldırılı Spoofing dosyası
+  kaçırıldı. ID
   çıkarılınca DoS 1,000'den 0,000'a düşüyor (ID kısayolu). `bus_count_100ms`
   Replay'i %92 yakalıyor ama saniyede 73 yanlış alarmla (kayıt kısayolu).
   Replay içerikle %0,3, `iat_id` ile %25-29 yakalanıyor.
+- Sonradan bulundu: her release dosyası bir eğitim kaydının zamanda doğrudan
+  devamı (aradaki boşluk 0,2-0,6 ms; 7 çift). Release testi bu yüzden aynı
+  sürüşün sonraki dakikalarını ölçüyor, yeni kaydı değil. Farklı kayıtlar
+  arası skor yalnız iç fold'larda var: F1 0,375-0,859, FPR en çok %9,4.
 - Ayrıntılar ve sınırlar: [release testi](kia_release_test.md).
+
+## 15b. Replay için ritim özellikleri (9 Kasım)
+
+- Replay'de saldırı 10 sn açık, 10 sn kapalı geliyor; tüm ID'lere saldırılıyor
+  ve saldırı sırasında her ID'nin akışına yaklaşık 1,33 periyotta bir (10 ms'lik
+  ID'de yaklaşık 13 ms) eski bir kopya giriyor. Kopyadan sonraki gerçek mesaj da kısa aralık gördüğü için
+  tek aralık ayırmıyor; ama gerçek mesajlar ritmi koruyor. İki önceki aynı-ID
+  mesajına süre gerçek mesajda tam periyot, kopyada küsurlu (örneğin 1,3).
+- Özellikler araçtan bağımsız: ID ve ham byte yok, süreler aracın temiz
+  sürüşünden ölçülen ID periyoduna bölünüyor. Ayarlar yalnız Kia replay
+  kaydının iki yarısında seçildi; Hyundai Sonata replay kaydında bir kez
+  test edildi.
+- Sonuç (dondurulmuş eşik): Sonata'da F1 0,877, temiz Sonata sürüşünde
+  saniyede 0,3 yanlış alarm. Sadece aralık ve sayımla F1 0,620. Kia release
+  replay dosyasında (ikinci bakış) 0,445'ten 0,903'e.
+- İçerik (değişen bit) az katkı veriyor (+0,01-0,02); Sonata kopyaları çoğu
+  zaman gerçeğiyle aynı.
+- Saldırı anlarında yanlış alarm hâlâ yüksek: Sonata'da saniyede 221,5
+  (saldırı araları 1,7).
+- Sınırlar: Sonata replay dosyasına özellik tasarımından önce etiketleriyle
+  bakıldı (yarı görülmüş test); Kia File_4 eğitim kaydının devamı; tek Kia
+  replay kaydı; iki araçta aynı saldırı düzeni; temiz sürüş kaydı gerekiyor. Ayrıntılar: [replay ritim testi](replay_rhythm_test.md).
 
 ## 16. Tekrar çalıştırma ve çalışma ağacı
 
@@ -407,15 +515,21 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
   `python experiments/kia_spoofing_sequence.py`.
 - CatBoost/sıra: `python experiments/kia_validation_ablation.py --model catboost --variant iat_id`
   ve `python experiments/kia_validation_ablation.py --model xgboost --variant sequence`.
+- Release sınıflandırma (Kia parquet ve dış bölme gerekir):
+  `python splits/make_kia_validation.py --seen-types --fold official`, ardından
+  `python experiments/kia_release_test.py select` ve yazdırılan sha256 ile
+  `python experiments/kia_release_test.py release --selection-sha256 <sha256>`.
+- Replay ritim (yalnız ham `car_track_*` klasörleri gerekir, parquet gerekmez):
+  `python experiments/replay_rhythm_test.py select`, ardından
+  `python experiments/replay_rhythm_test.py test --selection-sha256 <sha256>`.
 
-XGBoost/CatBoost deneylerinde Python 3.14.5, NumPy 2.4.6, pandas 2.3.3,
-scikit-learn 1.9.0, XGBoost 3.4.1; CatBoost deneyinde ayrıca 1.2.10 kullanıldı.
-Son kontrol çalıştırmasında depodaki 69 yapay/izolasyon testinin tümü geçti. Deneylerin
-ayrıntılı sonuç dosyaları `experiments/kia_decision_tree/local_outputs/` altında
-yerel ve Git tarafından yoksayılmıştır; veri ve ham kayıtlar commit edilmez.
+İlk oturumun XGBoost/CatBoost deneylerinde Python 3.14.5, NumPy 2.4.6, pandas
+2.3.3, scikit-learn 1.9.0; release ve ritim deneylerinde Python 3.12.3, NumPy
+2.5.4, pandas 3.1.0, scikit-learn 1.9.1. Her ikisinde XGBoost 3.4.1, CatBoost
+1.2.10. Sürümler her deneyin çıktı dosyasına da yazılır. Son kontrolde depodaki
+85 yapay/izolasyon testinin tümü geçti (`python -m unittest discover -s tests -t .`).
 
-Oturum boyunca çalışma dalı `feature/kia-grouped-validation` idi. Kullanıcının
-isteğiyle MR açılmadı. Önceden değiştirilmiş decision tree notebook'u ve
-izlenmeyen `HCRL/`, `car_track_*` ve notebook geçici dosyaları korunmuştur.
-Bu rapor önceki kayıtları özetler; çalışma ağacının gelecekteki durumunu garanti
-etmez.
+Deneylerin ayrıntılı sonuç dosyaları `experiments/kia_decision_tree/local_outputs/`
+altında yerel ve Git tarafından yoksayılmıştır; yeni bir klonda bu klasör boştur
+ve karşılaştırma için deney yeniden çalıştırılıp rapordaki tablolarla
+kıyaslanır. Veri ve ham kayıtlar commit edilmez.

@@ -7,6 +7,14 @@ earlier model had used. Feature variants measure shortcut reliance (CAN ID,
 timing, bus load). The release test was evaluated **once**, with settings
 frozen beforehand on inner validation only.
 
+**Each release file continues a training recording of the same capture
+session** (see [Release files continue training sessions](#release-files-continue-training-sessions)).
+The release test is therefore a forward-in-time holdout of the same sessions,
+not a test on new recordings. Scores across recordings of different sessions
+are lower and vary by type: inner folds give F1 0.375-0.859 (all types
+pooled); leaving one recording out per type gives Injection 0.968/0.997 and
+Spoofing 0-0.666 ([known-attack report](kia_known_attack.md)).
+
 This differs from the earlier leave-one-attack-out (`unseen_*`) experiments,
 where the tested attack type was absent from training. Scores of the two
 protocols answer different questions and must not be read as an improvement
@@ -82,6 +90,26 @@ Most fold-1 false alarms fall in the attack-free recording (variant A,
 full data: 35,537 of 47,845); their cause was not diagnosed. This did not
 recur on the release test.
 
+## Release files continue training sessions
+
+Found after the run. Sorting all 16 Kia recordings by timestamp, every release
+file starts 0.19-0.6 ms after a training recording ends (or ends just before
+it starts), with the same IDs; each pair is one capture cut in two.
+
+| Training recording | Release file | Gap |
+|---|---|---:|
+| preliminary Fuzzy (Injection) | preliminary `File_8` | 0.6 ms |
+| preliminary Malfunction (Spoofing) | preliminary `File_9` | 0.3 ms |
+| preliminary Flooding (DoS) | preliminary `File_7` | 0.19 ms |
+| final_2nd Replay | final_2nd `File_4` | 0.25 ms |
+| final_2nd Malfunction (Spoofing) | final_2nd `File_2` | 0.24 ms |
+| final_1st Malfunction (Spoofing) | final_1st `File_4` (precedes it) | 0.24 ms |
+| final_1st Fuzzy (Injection) | final_1st `File_2` | 0.24 ms |
+
+This confirms the inferred attack type of every release file. It also means
+the release scores below answer "same session, later minutes", like the 60/40
+time split above (F1 1.000), not "new recording".
+
 ## Release test
 
 Attack type per release file is **inferred** from its attack-frame ID pattern
@@ -114,9 +142,11 @@ cause noticeable false alarms.
 
 ## Findings
 
-- **Known attack types transfer to new recordings.** With ID and payload,
-  DoS, both Injection files and the two larger Spoofing files reach F1
-  0.99-1.00 at below 3 false alarms per second.
+- **Known attack types are detected later in the same session.** With ID and
+  payload, DoS, both Injection files and the two larger Spoofing files reach
+  F1 0.99-1.00 at below 3 false alarms per second. Across sessions (inner
+  folds, for example Injection final validated with only Injection
+  preliminary in training) F1 is 0.375-0.859 with up to 9.4 % FPR.
 - **DoS detection is an ID shortcut.** Removing the ID drops DoS recall from
   1.000 (A) to 0.000 (B); adding `iat_id` without the ID restores 0.977 (D).
 - **`bus_count_100ms` is a recording-level shortcut.** F reaches Replay recall
@@ -128,9 +158,14 @@ cause noticeable false alarms.
 
 ## Limitations
 
-- One to three recordings per attack type; one vehicle; session independence
-  of recordings is not verified. Results do not show generalisation to new
-  attack mechanisms (see the `unseen_*` reports).
+- One to three recordings per attack type; one vehicle. Release files are
+  verified **not** independent of training (same sessions). Preliminary
+  training recordings also overlap in time (Fuzzy 0-58 s, Malfunction
+  45-97 s, attack-free 88-180 s) and sit in different inner folds; no
+  identical frames were found between them. Results do not show
+  generalisation to new attack mechanisms (see the `unseen_*` reports).
+- The frozen OOF threshold was worse than 0.5 on the release test for every
+  variant (pooled table): inner validation did not predict the release test.
 - The file-to-type mapping is inferred and the release ID patterns were
   inspected before the run (partial contamination).
 - `id_masked` does not hide the ID: in normal training frames, the
@@ -143,6 +178,12 @@ cause noticeable false alarms.
 
 ## Reproduction
 
+Prerequisites: raw `car_track_*` folders in the repository root (see the README
+Dataset section), `pip install -r experiments/requirements.txt`, then the Kia
+pipeline: `python prepare_kia_soul.py`,
+`python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features`
+and `python splits/make_kia_splits.py`.
+
 ```sh
 python splits/make_kia_validation.py --seen-types --fold official
 python experiments/kia_release_test.py select
@@ -153,3 +194,10 @@ Outputs in the ignored `experiments/kia_decision_tree/local_outputs/`:
 `release_selection.json`, `release_test.json`, per-variant release
 probabilities and the attempt file. The rejected sampled selection is kept as
 `release_selection_sampled.json` (`select --sample-normals`).
+
+Pass the sha256 that your own `select` prints; it can differ from the hash
+above because the selection file records run times and library versions.
+`release` writes `release_test_attempt.json` before fitting, so a crash also
+uses up the attempt. For a deliberate rerun delete `release_test_attempt.json` and,
+after a completed run, `release_test.json` in `experiments/kia_decision_tree/local_outputs/`, and
+record that rerun in this report.
