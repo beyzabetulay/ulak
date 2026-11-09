@@ -391,7 +391,33 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
   çıkarılınca DoS 1,000'den 0,000'a düşüyor (ID kısayolu). `bus_count_100ms`
   Replay'i %92 yakalıyor ama saniyede 73 yanlış alarmla (kayıt kısayolu).
   Replay içerikle %0,3, `iat_id` ile %25-29 yakalanıyor.
+- Sonradan bulundu: her release dosyası bir eğitim kaydının zamanda doğrudan
+  devamı (aradaki boşluk 0,2-0,6 ms; 7 çift). Release testi bu yüzden aynı
+  sürüşün sonraki dakikalarını ölçüyor, yeni kaydı değil. Farklı kayıtlar
+  arası skor yalnız iç fold'larda var: F1 0,375-0,859, FPR en çok %9,4.
 - Ayrıntılar ve sınırlar: [release testi](kia_release_test.md).
+
+## 15b. Replay için ritim özellikleri (9 Kasım)
+
+- Replay'de saldırı 10 sn açık, 10 sn kapalı geliyor; tüm ID'lere saldırılıyor
+  ve saldırı sırasında her ID'nin akışına yaklaşık 1,33 periyotta bir (10 ms'lik
+  ID'de yaklaşık 13 ms) eski bir kopya giriyor. Kopyadan sonraki gerçek mesaj da kısa aralık gördüğü için
+  tek aralık ayırmıyor; ama gerçek mesajlar ritmi koruyor. İki önceki aynı-ID
+  mesajına süre gerçek mesajda tam periyot, kopyada küsurlu (örneğin 1,3).
+- Özellikler araçtan bağımsız: ID ve ham byte yok, süreler aracın temiz
+  sürüşünden ölçülen ID periyoduna bölünüyor. Ayarlar yalnız Kia replay
+  kaydının iki yarısında seçildi; Hyundai Sonata replay kaydında bir kez
+  test edildi.
+- Sonuç (dondurulmuş eşik): Sonata'da F1 0,877, temiz Sonata sürüşünde
+  saniyede 0,3 yanlış alarm. Sadece aralık ve sayımla F1 0,620. Kia release
+  replay dosyasında (ikinci bakış) 0,445'ten 0,903'e.
+- İçerik (değişen bit) az katkı veriyor (+0,01-0,02); Sonata kopyaları çoğu
+  zaman gerçeğiyle aynı.
+- Saldırı anlarında yanlış alarm hâlâ yüksek: Sonata'da saniyede 221,5
+  (saldırı araları 1,7).
+- Sınırlar: Sonata replay dosyasına özellik tasarımından önce etiketleriyle
+  bakıldı (yarı görülmüş test); Kia File_4 eğitim kaydının devamı; tek Kia
+  replay kaydı; iki araçta aynı saldırı düzeni; temiz sürüş kaydı gerekiyor. Ayrıntılar: [replay ritim testi](replay_rhythm_test.md).
 
 ## 16. Tekrar çalıştırma ve çalışma ağacı
 

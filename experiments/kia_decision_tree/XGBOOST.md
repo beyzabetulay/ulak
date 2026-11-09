@@ -98,4 +98,18 @@ unless `--selection-sha256` matches the selection file and no earlier
 `release_test.json` or `release_test_attempt.json` exists. Variants: A
 `standard`, B `id_masked`, C A+`iat_id`, D B+`iat_id`, F `full`. Normal-row
 sampling (`select --sample-normals`) is off by default because it doubled
-validation false alarms. Results: `experiments/results/kia_release_test.md`.
+validation false alarms. Each release file continues a training recording of
+the same session, so this is a forward-in-time holdout, not a new-recording
+test. Results: `experiments/results/kia_release_test.md`.
+
+## Replay rhythm features
+
+`experiments/replay_rhythm_test.py` targets Replay with vehicle-independent,
+past-only features: gaps to the 1st-3rd previous frame of the same ID and
+their distance to a whole period, the 100 ms same-ID count, and changed
+payload bits, all scaled by ID periods from an attack-free recording of the
+same vehicle (no CAN ID or raw bytes). `select` uses only the Kia Replay and
+an attack-free recording, split into two time blocks; `test` evaluates the
+Hyundai Sonata Replay recording once (inspected before the design, so
+semi-held-out), guarded like `kia_release_test.py`.
+Results: `experiments/results/replay_rhythm_test.md`.
