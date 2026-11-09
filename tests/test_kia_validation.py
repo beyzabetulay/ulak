@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'splits'))
-from make_kia_validation import make_folds
+from make_kia_validation import make_folds, make_seen_type_folds
 
 
 class KiaValidationTests(unittest.TestCase):
@@ -40,6 +40,40 @@ class KiaValidationTests(unittest.TestCase):
         self.df.loc[self.df.recording_id == 'e', 'label_bin'] = 0
         with self.assertRaisesRegex(ValueError, 'recordings containing both classes'):
             make_folds(self.df, self.train, self.test, 5)
+
+
+class SeenTypeFoldTests(unittest.TestCase):
+    def setUp(self):
+        recordings = {'dos': 'DoS', 'rep': 'Replay', 'inj1': 'Injection', 'inj2': 'Injection',
+                      'sp1': 'Spoofing', 'sp2': 'Spoofing', 'sp3': 'Spoofing', 'free1': 'Normal',
+                      'free2': 'Normal', 'test': 'mixed'}
+        rows = []
+        for rec, kind in recordings.items():
+            labels = [0, 0, 0, 0] if kind == 'Normal' else [0, 0, 1, 1]
+            rows += [(rec, kind, label) for label in labels]
+        self.df = pd.DataFrame(rows, columns=['recording_id', 'attack_type', 'label_bin'])
+        self.test = np.flatnonzero(self.df.recording_id == 'test')
+        self.train = np.flatnonzero(self.df.recording_id != 'test')
+
+    def test_validated_types_stay_in_inner_training(self):
+        folds = make_seen_type_folds(self.df, self.train, self.test, 2)
+        self.assertEqual(sorted(np.concatenate([v for _, v in folds]).tolist()),
+                         sorted(np.flatnonzero(self.df.recording_id.isin(
+                             ['inj1', 'inj2', 'sp1', 'sp2', 'sp3', 'free1', 'free2'])).tolist()))
+        for train, valid in folds:
+            self.assertEqual(sorted(np.concatenate((train, valid)).tolist()), self.train.tolist())
+            self.assertFalse(set(self.df.iloc[train].recording_id) & set(self.df.iloc[valid].recording_id))
+            self.assertEqual(set(self.df.iloc[valid].label_bin), {0, 1})
+            attacks = lambda part: set(self.df.iloc[part].query('label_bin == 1').attack_type)
+            self.assertLessEqual(attacks(valid), attacks(train))
+            self.assertFalse({'dos', 'rep'} & set(self.df.iloc[valid].recording_id))
+
+    def test_rejects_when_no_type_can_be_validated(self):
+        single = self.df[~self.df.recording_id.isin(['inj2', 'sp2', 'sp3'])].reset_index(drop=True)
+        train = np.flatnonzero(single.recording_id != 'test')
+        test = np.flatnonzero(single.recording_id == 'test')
+        with self.assertRaisesRegex(ValueError, 'no attack recording'):
+            make_seen_type_folds(single, train, test, 2)
 
 
 if __name__ == '__main__':

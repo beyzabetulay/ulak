@@ -86,3 +86,16 @@ cannot be inferred from the inner score. Outer test results were previously
 inspected and are not a pristine final holdout. Recording separation does not
 prove session independence. Report per-fold scores and confusion counts rather
 than only averages. Do not redistribute feature files or generated results.
+
+## Release-test classification
+
+`experiments/kia_release_test.py` trains on all `official` training recordings
+and evaluates the HCRL release test once. `select` uses only the seen-type
+inner folds (`python splits/make_kia_validation.py --seen-types --fold official`)
+and never loads release indices; it picks depth 3 or 6 per variant by mean
+fold AUPRC and freezes the out-of-fold F1 threshold. `release` refuses to run
+unless `--selection-sha256` matches the selection file and no earlier
+`release_test.json` or `release_test_attempt.json` exists. Variants: A
+`standard`, B `id_masked`, C A+`iat_id`, D B+`iat_id`, F `full`. Normal-row
+sampling (`select --sample-normals`) is off by default because it doubled
+validation false alarms. Results: `experiments/results/kia_release_test.md`.

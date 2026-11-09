@@ -81,3 +81,12 @@ Inner validation cannot
 measure the held-out outer attack type. Select features and hyperparameters using
 inner folds only, refit on the outer training partition, then evaluate on its
 outer test. Previously inspected test results are not a pristine final holdout.
+
+`python splits/make_kia_validation.py --seen-types --fold official` writes
+two folds to `splits/generated/kia_soul/validation_seen/` for the release-test
+experiment (`experiments/results/kia_release_test.md`). Every attack type in a
+validation fold also stays in that fold's inner training, so selection scores
+known attack types on new recordings. Types with a single training recording
+(DoS, Replay) always stay in training and are not represented in selection.
+The manifest also stores each index file's sha256. `validation_balanced/` is
+unchanged.

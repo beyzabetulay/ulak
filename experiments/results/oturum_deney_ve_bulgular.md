@@ -375,6 +375,24 @@ repo sonucu aynı test protokolünü veya görülmemiş Replay başarısını g�
   repodaki entropi ve pencere özellikleri de kontrollü ayrı deneylerdir; henüz
   bu oturumda uygulanmadılar.
 
+## 15a. Sonraki oturum: soru değişti, release testi (9 Kasım)
+
+- Hat kontrol edildi: ham CSV ile parquet satır satır aynı. Aynı kaydın ilk
+  %60'ında eğitilip son %40'ında test edilen XGBoost; DoS, Injection ve iki
+  Spoofing kaydında F1 1,000 aldı. `unseen_*` sonuçlarındaki %0'lar bir hata
+  değil, sınıflandırıcıya hiç görmediği saldırı mekanizmasını sormanın sonucu.
+- Replay kaydında 8 ms altındaki `iat_id` aralıklarında mesajların yaklaşık
+  yarısı normal, yarısı saldırı: araya giren replay mesajı arkasındaki gerçek
+  mesajın aralığını da kısaltıyor. Tek mesajla ayrım bu yüzden sınırlı.
+- Soru değiştirildi: tüm eğitim kayıtlarında eğitip HCRL release dosyalarında
+  aynı saldırı türlerini yakalamak. Ayarlar yalnız görülen-tür iç fold'larında
+  seçildi, release testi bir kez çalıştırıldı.
+- Sonuç: DoS, Injection ve iki büyük Spoofing dosyasında F1 0,99-1,00. ID
+  çıkarılınca DoS 1,000'den 0,000'a düşüyor (ID kısayolu). `bus_count_100ms`
+  Replay'i %92 yakalıyor ama saniyede 73 yanlış alarmla (kayıt kısayolu).
+  Replay içerikle %0,3, `iat_id` ile %25-29 yakalanıyor.
+- Ayrıntılar ve sınırlar: [release testi](kia_release_test.md).
+
 ## 16. Tekrar çalıştırma ve çalışma ağacı
 
 - Deney bağımlılıkları: `pip install -r experiments/requirements.txt`.
