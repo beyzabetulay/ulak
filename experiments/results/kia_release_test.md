@@ -176,6 +176,12 @@ cause noticeable false alarms.
 
 ## Reproduction
 
+Prerequisites: raw `car_track_*` folders in the repository root (see the README
+Dataset section), `pip install -r experiments/requirements.txt`, then the Kia
+pipeline: `python prepare_kia_soul.py`,
+`python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features`
+and `python splits/make_kia_splits.py`.
+
 ```sh
 python splits/make_kia_validation.py --seen-types --fold official
 python experiments/kia_release_test.py select
@@ -186,3 +192,9 @@ Outputs in the ignored `experiments/kia_decision_tree/local_outputs/`:
 `release_selection.json`, `release_test.json`, per-variant release
 probabilities and the attempt file. The rejected sampled selection is kept as
 `release_selection_sampled.json` (`select --sample-normals`).
+
+Pass the sha256 that your own `select` prints; it can differ from the hash
+above because the selection file records run times and library versions.
+`release` writes `release_test_attempt.json` before fitting, so a crash also
+uses up the attempt. Delete the attempt file only for a deliberate rerun and
+record that rerun in this report.

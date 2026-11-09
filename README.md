@@ -64,6 +64,9 @@ CAN ID fingerprint (see the script docstring). Counts are in
 with the same `build_features.py` as the full dataset (`--input` / `--prefix`),
 so the columns match `features_*.parquet`, plus a `round` column.
 
+Experiment results and lessons so far (Turkish summary with links to each
+report): [experiments/results/oturum_deney_ve_bulgular.md](experiments/results/oturum_deney_ve_bulgular.md).
+
 ## Related Work
 
 - [2024tm05004-beep/HCRL](https://github.com/2024tm05004-beep/HCRL) uses the
@@ -91,6 +94,7 @@ so the columns match `features_*.parquet`, plus a `round` column.
 ```bash
 python -m venv venv && source venv/bin/activate
 pip install pandas pyarrow
+pip install -r experiments/requirements.txt  # experiments and splits (scikit-learn, XGBoost, CatBoost)
 
 python prepare_kia_soul.py  # -> kia_soul_dataset.csv, reports/kia_soul_summary.md
 python build_features.py --input kia_soul_dataset.csv --prefix kia_soul_features

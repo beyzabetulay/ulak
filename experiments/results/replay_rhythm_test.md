@@ -150,7 +150,14 @@ python experiments/replay_rhythm_test.py select
 python experiments/replay_rhythm_test.py test --selection-sha256 <printed sha256>
 ```
 
-Reads the raw `car_track_*` folders. Outputs in the ignored
+Prerequisites: raw `car_track_*` folders in the repository root (see the README
+Dataset section) and `pip install -r experiments/requirements.txt`; no parquet
+or split files are needed. Outputs in the ignored
 `experiments/kia_decision_tree/local_outputs/`: `replay_selection.json`,
 `replay_rhythm_test.json`, the attempt file and per-variant test
 probabilities.
+
+Pass the sha256 that your own `select` prints; it can differ from the hash
+above if library versions differ. `test` writes `replay_rhythm_test_attempt.json`
+before fitting, so a crash also uses up the attempt. Delete the attempt file
+only for a deliberate rerun and record that rerun in this report.
