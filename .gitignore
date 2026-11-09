@@ -9,6 +9,7 @@ combined_dataset.csv
 kia_soul_dataset.csv
 features_*.parquet
 kia_soul_features_*.parquet
+experiments/kia_decision_tree/local_outputs/
 
 # os
 .DS_Store

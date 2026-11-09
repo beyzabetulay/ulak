@@ -56,3 +56,37 @@ The generator uses `kia_soul_features_all.parquet` and writes to `splits/generat
 Feature variants: `standard` (`can_id_dec`, `dlc`, `byte_0..7`), `id_masked` (no ID), `id_masked_timing` (no ID, plus `iat_id`, `iat_bus`) and `full` (everything, including `bus_count_100ms`). `bus_count_100ms` is only in `full` because it is also high for normal frames inside attack recordings, so it partly describes the recording rather than the frame (see `FINDINGS.md`).
 
 Share of test attack frames whose CAN ID never occurs in the fold's training rows: 15% for `unseen_injection`, 0% for every other fold. Kia Soul fuzzing mostly reuses the vehicle's own IDs, and ID `0000` (all DoS frames) occurs 14 times in the training rows of `unseen_dos`, inside Injection recordings.
+
+### Inner validation for Kia
+
+After generating the Kia outer splits, run `python splits/make_kia_validation.py`.
+This creates four recording-grouped train/validation pairs inside
+each outer training partition, including `official`; its outer test remains
+untouched. The original manifest and indices are not modified. The generated
+`splits/generated/kia_soul/validation_balanced/manifest.json` records the input and outer
+manifest hashes, absolute parquet row-position index files, recording names,
+class counts and row counts by recording attack type for each part. Check both hashes
+before reusing these indices; regenerate if either input or outer splits change.
+Use `--folds`, `--input`, `--splits-dir` and `--output-dir` to override defaults.
+
+The deterministic assignment places recordings containing both labels into
+different folds first, then greedily balances row counts. It fails if there are
+fewer mixed-label recordings than folds. Four is the common maximum for these
+Kia outer training sets: `unseen_spoofing` has only four mixed recordings.
+This uses training labels for split construction, never outer-test labels. It
+does not balance attack types or guarantee independent collection sessions;
+some attack types have only one recording, and recording-level separation is not
+proof of session independence. Report fold support and per-recording metrics.
+Inner validation cannot
+measure the held-out outer attack type. Select features and hyperparameters using
+inner folds only, refit on the outer training partition, then evaluate on its
+outer test. Previously inspected test results are not a pristine final holdout.
+
+`python splits/make_kia_validation.py --seen-types --fold official` writes
+two folds to `splits/generated/kia_soul/validation_seen/` for the release-test
+experiment (`experiments/results/kia_release_test.md`). Every attack type in a
+validation fold also stays in that fold's inner training, so selection scores
+known attack types on new recordings. Types with a single training recording
+(DoS, Replay) always stay in training and are not represented in selection.
+The manifest also stores each index file's sha256. `validation_balanced/` is
+unchanged.
