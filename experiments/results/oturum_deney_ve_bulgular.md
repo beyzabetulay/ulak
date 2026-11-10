@@ -12,6 +12,8 @@ ayrı raporlarda bulunur.
 Bölümler zaman sırasıyla yazıldı ve eski bölümlerdeki bazı sonuçlar sonraki
 bölümlerde düzeltildi. Güncel durum bu özettir; ayrıntı için §15a ve §15b,
 terimler için §2. §15 ve öncesi, o anki bilgiyle yazılmış geçmiş kayıttır.
+Bütün çalışmanın aşama aşama, sebepleriyle anlatımı:
+[deneylerin sırası ve sebepleri](deney_hikayesi.md).
 
 1. **`unseen_*` sonuçlarındaki %0'lar hata değil.** Sınıflandırıcıya hiç
    görmediği saldırı türü soruldu; hat doğru çalışıyor
