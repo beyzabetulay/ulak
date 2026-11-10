@@ -43,11 +43,15 @@ Bütün çalışmanın aşama aşama, sebepleriyle anlatımı:
    0-0,035'e düşüyor; ritim modeli de 0,13'e düşüyor (büyük ihtimalle o da
    "bilinmeyen ID" ipucuna dayanıyor). Ön kayıtlı 4 hipotezden 2'si tuttu
    ([araçlar arası test](shortcut_transfer_test.md)).
-8. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
-   Future Work yalnız ikinci veri setlerini anlatır): DoS'u ID'den bağımsız
-   yakalamak (bilinen bir ID ile yapılan taşmayı öğretecek veri ya da
-   özellik); ritim modelinin olasılık kalibrasyonu (eşik 0,028). Henüz
-   planlanmadı.
+8. **DoS kısayolu ritim modelinde giderildi.** Eğitime Kia DoS kaydının ID'si
+   normal bir ID'ye çevrilmiş bir kopyası eklendi; başka bir şey değişmedi.
+   Ritim modeli, ID'si değiştirilmiş DoS'u Spark'ta %13,8 yerine %100,
+   Sonata'da %12,6 yerine %100 yakalıyor; temiz sürüşte yanlış alarm artmadı.
+   ID ve içerik kullanan modeller bundan faydalanmadı. Aynı test dosyalarına
+   ikinci bakış ([rapor](dos_id_swap_training.md)).
+9. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
+   Future Work yalnız ikinci veri setlerini anlatır): henüz belirlenmedi;
+   sonuçların hocaya sunulması önerilir.
 
 ### Saldırı türüne göre güncel durum
 
@@ -58,7 +62,7 @@ depth 6, eşik 0,5).
 
 | Tür | Aynı sürüş (release, varyant C) | Başka kayıt | Ne kadar güvenilir |
 |---|---|---|---|
-| DoS | 1,000 | Spark 0,989 / Sonata 0,962 (ritim, ID 0 bilinmeyen ID olarak) | Düşük: ID 0 ezberi; ID değiştirilince tüm modeller düşüyor |
+| DoS | 1,000 | Spark 0,989 / Sonata 0,962 (ritim); ID değiştirilmiş kopyayla eğitilince ID'si değişen DoS'ta da 0,961 / 0,937 | Orta: ritim modelinde ID kısayolu giderildi (ikinci bakış, sentetik değişiklik); ID'li modeller hâlâ ID 0'a bağlı |
 | Injection | 0,990 / 0,997 | Kia 0,968 / 0,997; Spark 0,98, Sonata 0,77-0,93 (ritim) | Orta: ritim araçlar arası taşınıyor; ID'li modeller başka araçta çok yanlış alarm veriyor |
 | Spoofing | 1,000 / 0,996; 170 saldırılı dosyada 0 | Kia 0,666 / 0,640 / 0 (130 saldırı); Spark 0,82, Sonata 0,85-0,89 (ritim) | Düşük-orta: Kia içinde kayda göre çok değişiyor; ritim başka araçta dayanıyor |
 | Replay | 0,445 (C); ritim modeli R2 ile 0,903 | Sonata 0,877 (ritim modeli, yarı görülmüş) | Düşük-orta: Sonata yarı görülmüş test, tek Kia kaydı, iki araçta aynı saldırı düzeni, saldırı anlarında saniyede 221,5 yanlış alarm |

@@ -205,6 +205,25 @@ DoS için ayrıca saldırı mesajlarının ID'si 0'dan normal bir ID'ye çevrild
   olarak çıktığı için doğrulanmadı; ritim modelinin ID değişikliğine dayanacağı
   hipotezi de doğrulanmadı.
 
+## Aşama 8: DoS kısayolunu gidermek
+
+**Soru:** DoS, ID 0'a bakmadan yakalanabilir mi?
+
+Eğitimde normal bir ID ile yapılmış taşma örneği olmadığı için en basit çözüm
+denendi: Kia DoS kaydının, saldırı mesajlarına normal bir ID verilmiş bir
+kopyası eğitime eklendi. Model, ayar ve test dosyaları önceki deneyle aynıdır;
+bu yüzden sonuç aynı dosyalara ikinci bakıştır ([rapor](dos_id_swap_training.md)).
+
+| Model | ID'si değiştirilmiş DoS recall, Spark | Sonata | Temiz Spark sürüşünde saldırı denen mesaj |
+|---|---:|---:|---:|
+| A: ID + byte | 0 → 0 | 0 → 0 | %20,2 → %25,2 |
+| C: A + zamanlama | 0,035 → 0,111 | 0,020 → 0,020 | %9,7 → %8,4 |
+| T: ID'siz ritim | **0,138 → 1,000** | **0,126 → 1,000** | %0,34 → %0,31 |
+
+Ritim modeli taşmayı artık zamanlamasından tanır; ID ve içerik kullanan
+modellerin girdilerinde taşma hızını anlatan bir bilgi olmadığı için onlar
+bundan faydalanmaz.
+
 ## Yöntemde yapılan düzeltmeler
 
 | İlk durum | Düzeltme | Etkisi |
@@ -227,7 +246,8 @@ DoS için ayrıca saldırı mesajlarının ID'si 0'dan normal bir ID'ye çevrild
 
 ## Açık konular
 
-- DoS'u ID'den bağımsız yakalamak.
+- DoS'un ID'den bağımsız yakalanmasını sentetik olmayan bir saldırıyla
+  doğrulamak (yalnız ritim modelinde, sentetik ID değişikliğiyle gösterildi).
 - Ritim modelinin olasılıklarının kalibrasyonu (dondurulmuş eşik 0,028).
 - Değerlendirme ölçütü (F1 veya recall ağırlıklı F) ve mesaj ya da pencere
   bazlı değerlendirme.
