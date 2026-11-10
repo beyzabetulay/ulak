@@ -11,7 +11,7 @@ a flood on a normal ID.
 One addition to the training data, nothing else: a copy of the Kia DoS
 recording (`Flooding_KIA_Soul_train.csv`) in which the ID 0 attack frames get
 Kia's most frequent clean-drive ID (`153`); features are recomputed for the
-copy. The four variants (A ID+bytes, B no ID, C A+`iat_id`, T ID-free rhythm)
+copy. The four variants (A ID+bytes, B no ID, C A+`iat_id`, T rhythm features without the ID)
 are refit with the depth and threshold frozen in the cross-vehicle selection;
 no new selection or tuning.
 
@@ -37,10 +37,17 @@ T on the swapped DoS recordings: F1 0.225 → 0.961 (Spark), 0.200 → 0.937
 - **For the rhythm model, one swapped training copy removes the ID 0
   shortcut.** It now detects the flood by its timing on both vehicles, without
   more false alarms on clean drives.
-- **The content models do not benefit.** A, B and C see the flood frame as an
-  all-zero payload on a normal ID; nothing in their inputs describes the flood
-  rate, so they cannot learn it. A's clean-drive false alarms rise (Spark
-  20.2 % → 25.2 %).
+- **A and B do not benefit; C only weakly.** A and B have no input that
+  describes the flood rate. C has one (`iat_id`, the gap to the same ID's
+  previous frame) and does learn some of it: at threshold 0.5 its recall on
+  the swapped flood rises from 0.486 to 0.893 (Spark) and 0.177 to 0.408
+  (Sonata), but its ranking stays weak (AUPRC 0.32 → 0.42 and 0.38 → 0.39,
+  against 1.00 and 0.995 for T), and its high frozen threshold (0.815) hides
+  the gain. A's clean-drive false alarms rise (Spark 20.2 % → 25.2 %).
+- **The extra copy also moves non-DoS results** by up to about 0.2 (for
+  example T's AUPRC on Spark Malfunction 0.765 → 0.967; B's F1 on Sonata
+  final_1st Fuzzy 0.806 → 0.876), so small differences between variants in
+  the cross-vehicle test are within what a small training change produces.
 
 ## Limits
 

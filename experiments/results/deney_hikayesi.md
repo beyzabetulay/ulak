@@ -17,9 +17,10 @@ kendi raporundadır; kısa güncel durum için
 4. Replay, ID'nin düzenli ritmine bakan özelliklerle büyük ölçüde ayrılır
    (Sonata'da F1 0,877).
 5. Shortcut learning vardır: Kia'da eğitilen ID ve içerik kullanan modeller,
-   başka bir araçta (Spark) temiz sürüşün %10-20'sine saldırı der. ID'siz ritim
-   modeli bu oranı %0,34'e indirir. DoS ise bütün modellerde ID 0 kuralıyla
-   yakalanır.
+   başka bir araçta (Spark) temiz sürüşün %10-20'sine saldırı der. ID'yi girdi
+   olarak almayan ritim modeli bu oranı %0,34'e indirir; ancak o da
+   Injection'da ve DoS'ta "bu ID araçta hiç görülmedi" ipucuna dayanır. Kısayol,
+   ID'yi girdiden çıkarmakla bile kaybolmaz.
 
 ## Aşama 1: Veri ve hazırlık
 
@@ -192,18 +193,26 @@ DoS için ayrıca saldırı mesajlarının ID'si 0'dan normal bir ID'ye çevrild
 | A: ID + byte | %20,2 | 0,417 | 0,585 | 0,000 |
 | B: byte | %15,1 | 0,468 | 0,670 | 0,000 |
 | C: A + zamanlama | %9,7 | 0,498 | 0,629 | 0,035 |
-| T: ID'siz ritim | %0,34 | 0,980 | 0,824 | 0,138 |
+| T: ritim (ID girdi değil) | %0,34 | 0,980 | 0,824 | 0,138 |
 
 - ID ve içerik kullanan modeller Kia'nın normal trafiğini ezberler; başka
   araçta tanımadıkları içeriğe saldırı der. Kısayol, kaçırılan saldırı olarak
   değil, yanlış alarm olarak ortaya çıkar.
-- ID'siz ritim modeli Injection ve Spoofing'de başka araca taşınır.
+- Ritim modelinin Spark Injection sonucu (0,980) ritimden değil, bilinmeyen
+  ID'den gelir: saldırı mesajlarının %96'sı Spark'ın normal trafiğinde hiç
+  olmayan ID'ler kullanır ve yalnız "ID bilinmiyorsa saldırı" kuralı 0,979
+  alır. Ritim modeli ID'yi girdi olarak almasa da ID'nin yeniliğini, boş kalan
+  zamanlama özellikleri üzerinden görür.
+- Spark Spoofing sonucu (0,824) yalnız Kia'da dondurulan çok düşük eşikte
+  (0,028) çıkar; 0,5 eşiğinde 0,017'dir. Eşikten bağımsız sıralamada byte
+  modeli B daha iyidir (AUPRC 0,859'a karşı 0,765).
 - DoS bütün modellerde ID 0'a dayanır; ritim modeli de ID 0'ı "bilinmeyen ID"
   olarak tanır. Eğitimde normal bir ID ile yapılmış taşma örneği yoktur.
-- Hipotezlerden ikisi doğrulandı (ID'siz içerik modeli daha az düşer; ritim
-  modeli ID'li modeli geçer). F1 düşüşüne dayanan hipotez, etki yanlış alarm
-  olarak çıktığı için doğrulanmadı; ritim modelinin ID değişikliğine dayanacağı
-  hipotezi de doğrulanmadı.
+- Hipotezler: ritim modelinin ID'li modeli geçeceği hipotezi tanımı gereği
+  doğrulandı, ama yukarıdaki iki nedene dayanır; ID'siz içerik modelinin daha
+  az düşeceği hipotezi küçük farkla tuttu ve kesin sayılmaz. F1 düşüşüne
+  dayanan hipotez, etki yanlış alarm olarak çıktığı için doğrulanmadı; ritim
+  modelinin ID değişikliğine dayanacağı hipotezi de doğrulanmadı.
 
 ## Aşama 8: DoS kısayolunu gidermek
 
@@ -218,11 +227,14 @@ bu yüzden sonuç aynı dosyalara ikinci bakıştır ([rapor](dos_id_swap_traini
 |---|---:|---:|---:|
 | A: ID + byte | 0 → 0 | 0 → 0 | %20,2 → %25,2 |
 | C: A + zamanlama | 0,035 → 0,111 | 0,020 → 0,020 | %9,7 → %8,4 |
-| T: ID'siz ritim | **0,138 → 1,000** | **0,126 → 1,000** | %0,34 → %0,31 |
+| T: ritim (ID girdi değil) | **0,138 → 1,000** | **0,126 → 1,000** | %0,34 → %0,31 |
 
-Ritim modeli taşmayı artık zamanlamasından tanır; ID ve içerik kullanan
-modellerin girdilerinde taşma hızını anlatan bir bilgi olmadığı için onlar
-bundan faydalanmaz.
+Ritim modeli taşmayı artık zamanlamasından tanır. A ve B'nin girdilerinde
+taşma hızını anlatan bir bilgi yoktur. C'de vardır (`iat_id`) ve taşmayı zayıf
+biçimde öğrenir (0,5 eşiğinde Spark'ta recall 0,486'dan 0,893'e), ancak yüksek
+dondurulmuş eşiği (0,815) bunu gizler. Eklenen kopya DoS dışındaki sonuçları
+da 0,2'ye kadar oynatır; bu yüzden modeller arasındaki küçük farklar
+yorumlanmamalıdır.
 
 ## Yöntemde yapılan düzeltmeler
 
@@ -233,6 +245,7 @@ bundan faydalanmaz.
 | İç fold'larda bazı türlerin tamamı validation'daydı | Validation'daki türler eğitimde de bulunacak şekilde yeniden kuruldu | Seçim bilinen türler üzerinden yapıldı |
 | Release dosyaları yeni kayıt sanıldı | Eğitim kayıtlarının devamı olduğu gösterildi | Release skorları "aynı sürüş" olarak okundu |
 | Sonata replay testi temiz sanıldı | Önceden incelendiği belirtildi | "Yarı görülmüş test" olarak raporlandı |
+| Ritim modeli "ID'siz" sanıldı | Denetimde bilinmeyen ID'lerde boş kalan özelliklerin bir ID ipucu olduğu gösterildi | Injection ve DoS sonuçları "bilinmeyen-ID kontrolü" olarak okundu |
 | Hipotezler sonradan yorumlanabilirdi | Son testte hipotezler testten önce yazıldı | Doğrulanmayan hipotezler olduğu gibi raporlandı |
 
 ## Veri kullanımı ve modeller
