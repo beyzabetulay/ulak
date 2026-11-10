@@ -113,3 +113,12 @@ an attack-free recording, split into two time blocks; `test` evaluates the
 Hyundai Sonata Replay recording once (inspected before the design, so
 semi-held-out), guarded like `kia_release_test.py`.
 Results: `experiments/results/replay_rhythm_test.md`.
+
+## Shortcut test across vehicles
+
+`experiments/shortcut_transfer_test.py` trains A (ID+bytes), B (no ID),
+C (A+`iat_id`) and T (ID-free rhythm features) on the nine Kia training
+recordings, selects on the seen-type inner folds, and evaluates Chevrolet
+Spark (3 shared IDs with Kia) and Hyundai Sonata once, plus DoS recordings
+whose ID 0 frames get a normal ID. Hypotheses are written to the selection
+file before the test. Results: `experiments/results/shortcut_transfer_test.md`.

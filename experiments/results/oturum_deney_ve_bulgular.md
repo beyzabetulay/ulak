@@ -32,11 +32,20 @@ terimler için §2. §15 ve öncesi, o anki bilgiyle yazılmış geçmiş kayıt
    eklenince 0,877. Kia release replay dosyasında release testindeki 0,445'ten
    0,903'e. Sonata dosyasına tasarımdan önce bakıldığı için yarı görülmüş test;
    saldırı anlarında yanlış alarm hâlâ yüksek ([replay ritim testi](replay_rhythm_test.md)).
-7. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
-   Future Work yalnız ikinci veri setlerini anlatır): gerçekten yeni kayıtta test. Kullanılmamış Sonata ve Spark kayıtları
-   (aşağıdaki liste) duruyor. Aday: DoS, Injection ve Spoofing için ritim
-   modelindeki gibi ID'siz zamanlama ve içerik-değişimi özellikleriyle Kia'da
-   eğitip Sonata'nın kullanılmamış kayıtlarında test etmek; henüz planlanmadı.
+7. **Kısayol başka araçta yanlış alarm olarak çıkıyor.** Kia'da eğitilip
+   Spark'ta (Kia ile 3 ortak ID) bir kez test edildi: ID ve byte kullanan
+   modeller temiz Spark sürüşünün %10-20'sine saldırı diyor (saniyede
+   222-464 yanlış alarm); ID'siz ritim modeli %0,34. Ritim modeli Spark'ta
+   Injection'da F1 0,98, Spoofing'de 0,82. DoS'ta ID 0 ezberi kanıtlandı: DoS
+   mesajlarına normal bir ID verilince ID'li modellerin recall'ı 1,0'dan
+   0-0,035'e düşüyor; ritim modeli de 0,13'e düşüyor (büyük ihtimalle o da
+   "bilinmeyen ID" ipucuna dayanıyor). Ön kayıtlı 4 hipotezden 2'si tuttu
+   ([araçlar arası test](shortcut_transfer_test.md)).
+8. **Sonraki adım** (§15'teki eski "sonraki adım"ın yerine geçer; README'deki
+   Future Work yalnız ikinci veri setlerini anlatır): DoS'u ID'den bağımsız
+   yakalamak (bilinen bir ID ile yapılan taşmayı öğretecek veri ya da
+   özellik); ritim modelinin olasılık kalibrasyonu (eşik 0,028). Henüz
+   planlanmadı.
 
 ### Saldırı türüne göre güncel durum
 
@@ -47,9 +56,9 @@ depth 6, eşik 0,5).
 
 | Tür | Aynı sürüş (release, varyant C) | Başka kayıt | Ne kadar güvenilir |
 |---|---|---|---|
-| DoS | 1,000 | yok (tek kayıt) | Düşük: ID 0 ezberi; ID'siz model `iat_id` ile 0,977 |
-| Injection | 0,990 / 0,997 | 0,968 (final) / 0,997 (prelim) | Orta: iki kayıt da aynı aracın, iki farklı saldırı biçimi |
-| Spoofing | 1,000 / 0,996; 170 saldırılı dosyada 0 | 0,666 (final-2nd), 0,640 (prelim), 0 (final-1st, 130 saldırı) | Düşük: kayda göre çok değişiyor |
+| DoS | 1,000 | Spark 0,989 / Sonata 0,962 (ritim, ID 0 bilinmeyen ID olarak) | Düşük: ID 0 ezberi; ID değiştirilince tüm modeller düşüyor |
+| Injection | 0,990 / 0,997 | Kia 0,968 / 0,997; Spark 0,98, Sonata 0,77-0,93 (ritim) | Orta: ritim araçlar arası taşınıyor; ID'li modeller başka araçta çok yanlış alarm veriyor |
+| Spoofing | 1,000 / 0,996; 170 saldırılı dosyada 0 | Kia 0,666 / 0,640 / 0 (130 saldırı); Spark 0,82, Sonata 0,85-0,89 (ritim) | Düşük-orta: Kia içinde kayda göre çok değişiyor; ritim başka araçta dayanıyor |
 | Replay | 0,445 (C); ritim modeli R2 ile 0,903 | Sonata 0,877 (ritim modeli, yarı görülmüş) | Düşük-orta: Sonata yarı görülmüş test, tek Kia kaydı, iki araçta aynı saldırı düzeni, saldırı anlarında saniyede 221,5 yanlış alarm |
 
 ### Hangi dosya nerede kullanıldı
@@ -61,13 +70,15 @@ Spark 4 eğitim; 8 release dosyası Sonata veya Spark).
 |---|---|---|---|
 | Release sınıflandırma ([rapor](kia_release_test.md)) | 9 Kia eğitim kaydı | aynı 9 kayıt, 2 iç fold (DoS ve Replay hep eğitimde) | 7 Kia release dosyası |
 | Replay ritim ([rapor](replay_rhythm_test.md)) | Kia final_2nd `Replay_dataset`, Kia preliminary `Attack_free` | aynı iki kaydın ilk ve ikinci yarısı | Sonata final_2nd `Replay_dataset`, Sonata preliminary `Attack_free` (temiz sürüş yanlış alarmı), Kia final_2nd release `File_4` |
+| Araçlar arası kısayol ([rapor](shortcut_transfer_test.md)) | 9 Kia eğitim kaydı | release ile aynı 2 iç fold | Spark preliminary `Flooding`, `Fuzzy`, `Malfunction`, `Attack_free` ikinci yarısı; Sonata `Flooding`, `Fuzzy` (preliminary, final_1st), `Malfunction` (preliminary, final_1st, final_2nd), preliminary `Attack_free`; iki `Flooding` kaydının ID'si değiştirilmiş kopyası |
 
 Ritim deneyinde ID periyotları Kia ve Sonata'nın final_1st `Attack_free`
 kayıtlarından ölçülür; bu iki dosya eğitim ya da test satırı olarak kullanılmaz.
+Araçlar arası testte periyotlar Spark `Attack_free`'nin ilk yarısından ve
+Sonata final_1st `Attack_free`'den ölçülür.
 
-**Hiç kullanılmayan veri:** Sonata `Flooding` (preliminary), `Fuzzy` (preliminary, final_1st),
-`Malfunction` (preliminary, final_1st, final_2nd); Spark'ın 4 kaydı (`Attack_free`,
-`Flooding`, `Fuzzy`, `Malfunction`); 8 Sonata/Spark release dosyası.
+**Hiç kullanılmayan veri:** sadece 8 Sonata/Spark release dosyası (eğitim
+kayıtlarının devamı oldukları için temiz test sayılmazlar).
 
 ## 1. Projenin sorusu
 
